@@ -24,6 +24,8 @@
 #include "fstb.h"
 #include "xgf.h"
 #include "mini_top.h"
+/* fpsgo_trace_event.h leaves TRACE_INCLUDE_PATH defined; the scheduler hooks define it again. */
+#undef TRACE_INCLUDE_PATH
 #include "sched/sched.h"
 
 
