@@ -1590,12 +1590,18 @@ static void __iomem *plls_base[PLL_SYS_NUM];
 		.pcwibits = MT6789_INTEGER_BITS,        \
 	}
 
+/*
+ * Jelly Star: post-dividers matching the gpufreq v2_legacy MT6789 OPP table (/2 for 962-1100 MHz,
+ * /4 for 390-948 MHz), which keeps the VCO within MT6789_PLL_FMIN..FMAX (1.5-3.8 GHz). The previous
+ * thresholds picked /1 for 1069-1900 MHz (a 1.1 GHz VCO at 1100 MHz) and /8 at 390 MHz, so gpufreq
+ * read back a different frequency than it set and aborted.
+ */
 static const struct mtk_pll_div_table mfgpll_div_table[] = {
-	{ .div = 0, .freq = 1900000000},
-	{ .div = 1, .freq = 1069000000 },
-	{ .div = 2, .freq = 954000000 },
-	{ .div = 3, .freq = 389000000 },
-	{ .div = 4, .freq = 1 },
+	{ .div = 0, .freq = 3800000000UL },
+	{ .div = 1, .freq = 1900000000 },
+	{ .div = 2, .freq = 948000000 },
+	{ .div = 3, .freq = 375000000 },
+	{ .div = 4, .freq = 187500000 },
 	{ /* sentinel */ }
 };
 static const struct mtk_pll_data apmixed_plls[] = {
