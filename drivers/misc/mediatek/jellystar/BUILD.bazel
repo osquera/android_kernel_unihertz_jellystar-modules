@@ -1,0 +1,33 @@
+load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
+load("//build/kernel/kleaf:kernel.bzl", "ddk_headers")
+
+package(
+	default_visibility = [
+		"//visibility:public",
+	],
+)
+
+# Exports the Agold ODM hooks that the stock Jelly Star driver modules import.
+define_mgk_ddk_ko(
+	name = "agold_compat",
+	srcs = [
+		"agold_compat.c",
+	],
+)
+
+# Build-only: declares the charger-state variables that the stock fauge module exports, so
+# mtk_charger_framework can link against them. Not shipped; fauge provides them at runtime.
+define_mgk_ddk_ko(
+	name = "fauge_symbols",
+	srcs = [
+		"fauge_symbols.c",
+	],
+)
+
+
+# gpufreq_v2.h -> gpufreq_v2_legacy.h for modules built on entry-level (MT6789) platforms.
+ddk_headers(
+	name = "gpufreq_v2_legacy_shim",
+	hdrs = ["include/gpufreq_v2.h"],
+	includes = ["include"],
+)
