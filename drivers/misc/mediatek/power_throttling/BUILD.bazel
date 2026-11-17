@@ -1,6 +1,14 @@
 load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
 load("//build/kernel/kleaf:kernel.bzl", "ddk_headers")
 load("@mgk_info//:kernel_version.bzl","kernel_version",)
+load("@mgk_info//:dict.bzl", "DEFCONFIG_OVERLAYS")
+
+# Jelly Star: entry-level platforms (MT6789) run gpufreq v2_legacy. Build the gpufreq users
+# below against it, with gpufreq_v2.h mapped to gpufreq_v2_legacy.h, as ged already does.
+_GPUFREQ_LEGACY = "entry_level.config" in DEFCONFIG_OVERLAYS
+_GPUFREQ_DIR = "v2_legacy" if _GPUFREQ_LEGACY else "v2"
+_GPUFREQ_WRAPPER = "v2_legacy:mtk_gpufreq_wrapper_legacy" if _GPUFREQ_LEGACY else "v2:mtk_gpufreq_wrapper"
+_GPUFREQ_SHIM = ["//kernel_device_modules-{}/drivers/misc/mediatek/jellystar:gpufreq_v2_legacy_shim".format(kernel_version)] if _GPUFREQ_LEGACY else []
 
 package(
     default_visibility = [
@@ -183,23 +191,24 @@ define_mgk_ddk_ko(
         "mtk_low_battery_throttling_trace.h",
     ],
     header_deps = [
-        "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/v2:gpufreq_public_headers".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/{}:gpufreq_public_headers".format(kernel_version, _GPUFREQ_DIR),
+    ] + _GPUFREQ_SHIM + [
     ],
     hdrs = [
         "mtk_gpu_power_throttling.h",
     ],
     includes = [
         ".",
-        "$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpufreq/v2/include",
+        "$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpufreq/{}/include".format(_GPUFREQ_DIR),
     ],
     ko_deps = [
         "//kernel_device_modules-{}/drivers/misc/mediatek/power_throttling:mtk_low_battery_throttling".format(kernel_version),
 		"//kernel_device_modules-{}/drivers/misc/mediatek/power_throttling:mtk_battery_oc_throttling".format(kernel_version),
 		"//kernel_device_modules-{}/drivers/misc/mediatek/power_throttling:mtk_bp_thl".format(kernel_version),
-		"//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/v2:mtk_gpufreq_wrapper".format(kernel_version),
+		"//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/{}".format(kernel_version, _GPUFREQ_WRAPPER),
     ],
     copts = [
-        "-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpufreq/v2/include",
+        "-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpufreq/{}/include".format(_GPUFREQ_DIR),
     ],
 )
 

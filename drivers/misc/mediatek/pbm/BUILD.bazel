@@ -1,6 +1,14 @@
 load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
 load("//build/kernel/kleaf:kernel.bzl", "ddk_headers")
 load("@mgk_info//:kernel_version.bzl","kernel_version",)
+load("@mgk_info//:dict.bzl", "DEFCONFIG_OVERLAYS")
+
+# Jelly Star: entry-level platforms (MT6789) run gpufreq v2_legacy. Build the gpufreq users
+# below against it, with gpufreq_v2.h mapped to gpufreq_v2_legacy.h, as ged already does.
+_GPUFREQ_LEGACY = "entry_level.config" in DEFCONFIG_OVERLAYS
+_GPUFREQ_DIR = "v2_legacy" if _GPUFREQ_LEGACY else "v2"
+_GPUFREQ_WRAPPER = "v2_legacy:mtk_gpufreq_wrapper_legacy" if _GPUFREQ_LEGACY else "v2:mtk_gpufreq_wrapper"
+_GPUFREQ_SHIM = ["//kernel_device_modules-{}/drivers/misc/mediatek/jellystar:gpufreq_v2_legacy_shim".format(kernel_version)] if _GPUFREQ_LEGACY else []
 
 package(
     default_visibility = [
@@ -75,7 +83,8 @@ define_mgk_ddk_ko(
         "//kernel_device_modules-{}/drivers/misc/mediatek/cg_ppt:cg_ppt_headers".format(kernel_version),
         "//kernel_device_modules-{}/drivers/gpu/mediatek/mt-plat:gpu_utility_headers".format(kernel_version),
         "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq:mtk_gpufreq_headers".format(kernel_version),
-        "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/v2:gpufreq_public_headers".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/{}:gpufreq_public_headers".format(kernel_version, _GPUFREQ_DIR),
+    ] + _GPUFREQ_SHIM + [
         "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm:mcupm_public_headers".format(kernel_version),
     ],
     ko_deps = [
@@ -85,7 +94,7 @@ define_mgk_ddk_ko(
         "//kernel_device_modules-{}/drivers/soc/mediatek:mtk_tinysys_ipi".format(kernel_version),
         "//kernel_device_modules-{}/drivers/gpu/mediatek/gpueb:mtk_gpueb".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/tinysys_scmi:tinysys-scmi".format(kernel_version),
-        "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/v2:mtk_gpufreq_wrapper".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/gpu/mediatek/gpufreq/{}".format(kernel_version, _GPUFREQ_WRAPPER),
                 "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v3:mcupm".format(kernel_version),
     ],
     includes = [

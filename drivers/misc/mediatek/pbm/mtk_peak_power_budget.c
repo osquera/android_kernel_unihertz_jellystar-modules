@@ -3020,7 +3020,12 @@ static ssize_t mt_hpt_freq_setting_proc_write
 			&hwpt_data, sizeof(struct plt_ipi_data_s) / 4, 2000);
 	} else if (strcmp(xpu_type, "GPU") == 0) {
 		gpu_hpt_freq = freq;
+#ifdef __JELLYSTAR_GPUFREQ_V2_SHIM_H__
+		/* Jelly Star: gpufreq v2_legacy (MT6789) has no pre-UVLO GPU limit. */
+		pr_notice("GPU HPT limit not supported by gpufreq v2_legacy\n");
+#else
 		gpufreq_set_mfgsys_config(CONFIG_PREUVLO, freq);
+#endif
 	} else if (strcmp(xpu_type, "APU") == 0) {
 		apu_hpt_freq = freq;
 		writel(apu_hpt_freq, (void __iomem *)(ppb_sram_base + APU_LIMIT_FREQ_OFFSET));
