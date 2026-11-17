@@ -100,6 +100,7 @@ static void *kinfo_vaddr;
 
 static void mrdump_ka_work_func(struct work_struct *work);
 static void aee_base_addrs_init(void);
+static unsigned long aee_addr_find(const char *name);
 
 static DECLARE_DELAYED_WORK(ka_work, mrdump_ka_work_func);
 
@@ -119,27 +120,36 @@ static void mrdump_ka_work_func(struct work_struct *work)
 	kinfo = &(dbg_kinfo->info);
 	if (dbg_kinfo->magic_number == DEBUG_KINFO_MAGIC) {
 		_mrdump_kns = kinfo->num_syms;
-		/*
-		 * debug_kinfo should update, after that, revert this WA
-		 * _mrdump_krb = kinfo->_relative_pa + kimage_voffset;
-		 * mrdump_ko = (void *)(kinfo->_offsets_pa + kimage_voffset);
-		 */
 		mrdump_kn = (void *)(kinfo->_names_pa + kimage_voffset);
 		mrdump_ktt = (void *)(kinfo->_token_table_pa + kimage_voffset);
 		mrdump_kti = (void *)(kinfo->_token_index_pa + kimage_voffset);
-		mrdump_ko = (void *)mrdump_kti + 256 * sizeof(u16);
 		mrdump_km = (void *)(kinfo->_markers_pa + kimage_voffset);
 		p_stext = __phys_to_kimg(kinfo->_stext_pa);
 		p_etext = __phys_to_kimg(kinfo->_etext_pa);
 		p_text = __phys_to_kimg(kinfo->_text_pa);
-		_mrdump_krb = p_stext - SEGMENT_ALIGN;
 		p_init_begin = __phys_to_kimg(kinfo->_sinittext_pa);
+		/*
+		 * Jelly Star: take the offset table and the relative base from debug_kinfo instead of
+		 * deriving them (kti + 256 entries, _stext - SEGMENT_ALIGN); the derived base is wrong on
+		 * the android16-6.12 GKI build this phone runs, and every lookup then points elsewhere.
+		 */
+		mrdump_ko = (void *)(kinfo->_offsets_pa + kimage_voffset);
+		_mrdump_krb = __phys_to_kimg(kinfo->_relative_pa);
+		/*
+		 * Only trust the lookups if they find symbols at the start and the end of the text
+		 * section where the kernel says they are.
+		 */
+		mrdump_ka_done = MRDUMP_KA_MAGIC;
+		if (aee_addr_find("_stext") != p_stext || aee_addr_find("_etext") != p_etext ||
+		    aee_addr_find("_sinittext") != p_init_begin) {
+			pr_err("%s: kallsyms lookup mismatch, lookups disabled\n", __func__);
+			mrdump_ka_done = 0;
+		}
 		aee_base_addrs_init();
 		mrdump_cblock_late_init();
 		init_ko_addr_list_late();
 		mrdump_mini_add_klog();
 		mrdump_mini_add_kallsyms();
-		mrdump_ka_done = MRDUMP_KA_MAGIC;
 	} else {
 		pr_info("%s: retry in 0.1 second", __func__);
 		if (--retry_nm >= 0)
@@ -158,7 +168,14 @@ static unsigned int mrdump_checking_names(unsigned int off,
 	data = mrdump_kn + off;
 	len = *data;
 	data++;
-	off += len + 1;
+	off++;
+	/* Big symbols (e.g. Rust) store a second length byte, as in kallsyms_expand_symbol(). */
+	if (len & 0x80) {
+		len = (len & 0x7F) | (*data << 7);
+		data++;
+		off++;
+	}
+	off += len;
 
 	while (len) {
 		tptr = mrdump_ktt + *(mrdump_kti + *data);
