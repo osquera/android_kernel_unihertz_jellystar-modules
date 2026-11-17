@@ -56,4 +56,6 @@ static inline void mt_leds_notify_brightness_hw_changed(
 int mtk_leds_register_notifier(struct notifier_block *nb);
 int mtk_leds_unregister_notifier(struct notifier_block *nb);
 int mtk_leds_brightness_set(int connector_id, int level, unsigned int params, unsigned int params_flag);
+/* Jelly Star: backlight off/on with the panel power (see leds-mtk.c). */
+void mtk_leds_panel_power(bool on);
 int setMaxBrightness(int connector_id, int percent, bool enable);

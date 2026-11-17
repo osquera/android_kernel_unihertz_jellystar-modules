@@ -429,6 +429,45 @@ int mtk_leds_brightness_set(int connector_id, int level,
 }
 EXPORT_SYMBOL(mtk_leds_brightness_set);
 
+/*
+ * Jelly Star: the panel driver calls this when the panel powers down and up. Android lowers the
+ * brightness itself before switching the screen off, but the AOSP power-off charger only blanks
+ * the display, so the backlight stayed lit on a dark panel. Power down sets the hardware level
+ * to 0; power up restores the level last requested through the LED class (or by AAL, when it is
+ * in charge). Calls the hardware hook directly: this runs inside the display power-off path, and
+ * mtk_set_hw_brightness() may look up the DRM connector.
+ */
+void mtk_leds_panel_power(bool on)
+{
+	int i;
+
+	if (IS_ERR_OR_NULL(leds_info))
+		return;
+
+	for (i = 0; i < leds_info->lens; i++) {
+		struct mt_led_data *led_dat = container_of(leds_info->leds[i],
+				struct mt_led_data, desp);
+		int level = 0;
+
+		mutex_lock(&led_dat->led_access);
+		if (on) {
+			level = led_dat->conf.aal_enable ? led_dat->last_hw_brightness :
+				brightness_maptolevel(&led_dat->conf,
+						      led_dat->conf.cdev.brightness);
+			if (level) {
+				level = min(level, led_dat->conf.limit_hw_brightness);
+				level = max(level, led_dat->conf.min_hw_brightness);
+			}
+		}
+		if (led_dat->mtk_hw_brightness_set &&
+		    led_dat->mtk_hw_brightness_set(led_dat, level, 0,
+						   1 << SET_BACKLIGHT_LEVEL) >= 0)
+			led_dat->hw_brightness = level;
+		mutex_unlock(&led_dat->led_access);
+	}
+}
+EXPORT_SYMBOL_GPL(mtk_leds_panel_power);
+
 static int mtk_set_brightness(struct led_classdev *led_cdev,
 					  enum led_brightness brightness)
 {
