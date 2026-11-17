@@ -14,6 +14,17 @@ load("@mgk_info//:kernel_version.bzl",
      "kernel_version",
 )
 
+load("//kernel_device_modules-6.12:kernel/kleaf/jellystar_modules.bzl", "JELLYSTAR_STOCK_MODULES", "JELLYSTAR_STOCK_TARGETS")
+
+def _jellystar_keep(entry):
+    if entry.startswith("//"):
+        name = entry.split(":")[-1]
+        if name in JELLYSTAR_STOCK_TARGETS:
+            return True
+    else:
+        name = entry.split("/")[-1].removesuffix(".ko")
+    return name.replace("-", "_") in JELLYSTAR_STOCK_MODULES
+
 mgk_64_defconfig = "mgk_64_k612_defconfig"
 
 mgk_64_kleaf_modules = [
@@ -4887,6 +4898,22 @@ def get_overlay_modules_list():
     if "7xxx.config" in DEFCONFIG_OVERLAYS:
         mgk_64_kleaf_modules.append("//vendor/mediatek/kernel_modules/connectivity/bt/linux_v2_ce:btmtk_unify")
         mgk_64_kleaf_modules.append("//vendor/mediatek/kernel_modules/connectivity/wlan/core/gen4-mt79xx:wlan_mt7902")
+
+    # Jelly Star: keep only the modules the stock firmware loads.
+    for l in [mgk_64_kleaf_modules, mgk_64_kleaf_eng_modules, mgk_64_kleaf_userdebug_modules, mgk_64_kleaf_user_modules, mgk_64_kleaf_device_modules, mgk_64_kleaf_eng_device_modules, mgk_64_kleaf_userdebug_device_modules, mgk_64_kleaf_user_device_modules, mgk_64_device_modules, mgk_64_device_eng_modules, mgk_64_device_userdebug_modules, mgk_64_device_user_modules]:
+        kept = [e for e in l if _jellystar_keep(e)]
+        l.clear()
+        l.extend(kept)
+    for d in [mgk_64_kleaf_platform_modules, mgk_64_kleaf_platform_eng_modules, mgk_64_kleaf_platform_userdebug_modules, mgk_64_kleaf_platform_user_modules, mgk_64_platform_device_modules, mgk_64_platform_device_eng_modules, mgk_64_platform_device_userdebug_modules, mgk_64_platform_device_user_modules]:
+        for k in list(d.keys()):
+            if not _jellystar_keep(k):
+                d.pop(k)
+    # Jelly Star's own modules.
+    mgk_64_kleaf_device_modules.extend([
+        "//kernel_device_modules-{}/drivers/misc/mediatek/jellystar:agold_compat".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/gpu/drm/panel:panel-unihertz-jellystar-st7701s".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/power/supply:rt9471".format(kernel_version),
+    ])
 
 
 get_overlay_modules_list()
