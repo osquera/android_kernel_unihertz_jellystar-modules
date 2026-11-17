@@ -1471,21 +1471,17 @@ static int __gpufreq_freq_scale_gpu(unsigned int freq_old, unsigned int freq_new
 			}
 			ret = clk_set_rate(g_clk->clk_fhctl, freq_new*1000);
 			clk_disable_unprepare(g_clk->clk_fhctl);
-
-			/* 2. compute CON1 with target POSDIV */
-			pll = (readl(MFGPLL_CON1) & 0xF8FFFFFF) | (target_posdiv << POSDIV_SHIFT);
-			/* 3. change POSDIV by writing CON1 */
-			writel(pll, MFGPLL_CON1);
+			/*
+			 * Jelly Star: no separate POSDIV write here. Since "clk: gpu 6789 fhctl
+			 * interaction", the MFGPLL clock (clk-mt6789 mfgpll_div_table, applied by
+			 * clk-pll/FHCTL) sets PCW and POSDIV together; overwriting POSDIV with this
+			 * driver's table value halved Fgpu (1100 -> 550 MHz) and hit the abort below.
+			 */
 			/* PLL spec */
 			udelay(20);
 		} else {
-			/* 1. change POSDIV (by MFGPLL_CON1) */
-			pll = (readl(MFGPLL_CON1) & 0xF8FFFFFF) | (target_posdiv << POSDIV_SHIFT);
-			/* 2. change POSDIV by writing CON1 */
-			writel(pll, MFGPLL_CON1);
-			/* 3. wait until PLL stable */
-			udelay(20);
-			/* 4. change PCW by hopping */
+			/* Jelly Star: POSDIV is set by the clock framework, see above. */
+			/* change PCW and POSDIV by hopping */
 			ret = clk_prepare_enable(g_clk->clk_fhctl);
 			if (unlikely(ret)) {
 				__gpufreq_abort("fail to enable clk_fhctl: 0x%x (%d)", pcw, ret);
@@ -1507,10 +1503,38 @@ static int __gpufreq_freq_scale_gpu(unsigned int freq_old, unsigned int freq_new
 #endif
 	}
 
+	/*
+	 * Jelly Star: the MFGPLL clock (clk-pll) picks PCW and POSDIV together, but the FHCTL hop
+	 * on this phone only changes the DDS, so POSDIV can stay at the old value (1100 MHz came out
+	 * as 550 MHz). Set POSDIV to the divider that turns the programmed VCO into the target.
+	 */
+	{
+		unsigned int con1 = readl(MFGPLL_CON1);
+		unsigned long long vco_khz = ((unsigned long long)(con1 & 0x3FFFFF) *
+					      MFGPLL_FIN * 1000) >> DDS_SHIFT;
+		unsigned int posdiv = 0;
+
+		while (posdiv < POSDIV_POWER_16 &&
+		       (vco_khz >> posdiv) > freq_new + freq_new / 100)
+			posdiv++;
+		if (((con1 >> POSDIV_SHIFT) & 0x7) != posdiv) {
+			GPUFREQ_LOGI("align POSDIV %d->%d (VCO %llu kHz, target %d kHz)",
+				(con1 >> POSDIV_SHIFT) & 0x7, posdiv, vco_khz, freq_new);
+			writel((con1 & 0xF8FFFFFF) | (posdiv << POSDIV_SHIFT), MFGPLL_CON1);
+			udelay(20);
+		}
+	}
+
 	g_gpu.cur_freq = __gpufreq_get_real_fgpu();
-	if (unlikely(g_gpu.cur_freq != freq_new))
+	/*
+	 * Jelly Star: the clock framework rounds PCW its own way and the readback works in
+	 * 100 kHz steps (1100 MHz reads back as 1099.9 MHz), so allow less than 1% difference
+	 * and then keep the OPP frequency, which the table lookups expect.
+	 */
+	if (unlikely(abs((int)g_gpu.cur_freq - (int)freq_new) * 100 >= (int)freq_new))
 		__gpufreq_abort("inconsistent scaled Fgpu, cur_freq: %d, target_freq: %d",
 			g_gpu.cur_freq, freq_new);
+	g_gpu.cur_freq = freq_new;
 
 	GPUFREQ_LOGD("Fgpu: %d, PCW: 0x%x, CON1: 0x%08x", g_gpu.cur_freq, pcw, pll);
 
