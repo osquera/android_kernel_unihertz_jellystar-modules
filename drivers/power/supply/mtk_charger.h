@@ -7,6 +7,7 @@
 #define __MTK_CHARGER_H
 
 #include <linux/alarmtimer.h>
+#include <linux/iio/consumer.h>
 #include "charger_class.h"
 #include "adapter_class.h"
 #include "mtk_charger_algorithm_class.h"
@@ -517,6 +518,9 @@ struct mtk_charger {
 	/* battery control (bc) */
 	bool bc_enable;
 	bool bc_disable_charging;
+
+	/* Jelly Star: PMIC VBUS sense (VCDT) from the gauge node's "pmic_vbus" channel */
+	struct iio_channel *chan_vbus;
 };
 
 static inline int mtk_chg_alg_notify_call(struct mtk_charger *info,

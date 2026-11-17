@@ -66,6 +66,14 @@
 #include "mtk_charger.h"
 #include "mtk_battery.h"
 
+/*
+ * Jelly Star: charger state for the stock OZ8806 fuel-gauge module (fauge), which exports these
+ * (the stock mtk_charger_framework.ko imports them). Without them it stays in its discharge path
+ * while charging and the battery level does not rise. Set on plug in/out.
+ */
+extern int g_is_charger_on;
+extern int g_charger_type;
+
 struct tag_bootmode {
 	u32 size;
 	u32 tag;
@@ -2959,6 +2967,8 @@ static int mtk_charger_plug_out(struct mtk_charger *info)
 
 	chr_err("%s\n", __func__);
 	info->chr_type = POWER_SUPPLY_TYPE_UNKNOWN;
+	g_is_charger_on = 0;
+	g_charger_type = POWER_SUPPLY_TYPE_UNKNOWN;
 	info->charger_thread_polling = false;
 	info->dpdmov_stat = false;
 	info->lst_dpdmov_stat = false;
@@ -3005,6 +3015,8 @@ static int mtk_charger_plug_in(struct mtk_charger *info,
 		__func__);
 
 	info->chr_type = chr_type;
+	g_charger_type = chr_type;
+	g_is_charger_on = 1;
 	info->usb_type = get_usb_type(info);
 	info->charger_thread_polling = true;
 
@@ -4107,6 +4119,26 @@ static int mtk_charger_probe(struct platform_device *pdev)
 		"gauge");
 	if (IS_ERR_OR_NULL(info->bat_psy))
 		chr_err("%s: devm power fail to get bat_psy\n", __func__);
+
+	/*
+	 * Jelly Star: neither the charger IC (rt9471) nor a "mtk_charger_type" supply can report
+	 * VBUS, so get_vbus() read 0 V. In power-off charging that looked like an unplugged cable
+	 * and the framework shut the phone down. The gauge node lists the PMIC VBUS sense channel.
+	 */
+	{
+		struct device_node *gauge_np = of_parse_phandle(pdev->dev.of_node, "gauge", 0);
+
+		if (gauge_np) {
+			info->chan_vbus = devm_fwnode_iio_channel_get_by_name(&pdev->dev,
+					of_fwnode_handle(gauge_np), "pmic_vbus");
+			of_node_put(gauge_np);
+			if (IS_ERR(info->chan_vbus)) {
+				chr_err("%s: no pmic_vbus channel: %ld\n", __func__,
+					PTR_ERR(info->chan_vbus));
+				info->chan_vbus = NULL;
+			}
+		}
+	}
 
 	if (IS_ERR(info->psy1))
 		chr_err("register psy1 fail:%ld\n",

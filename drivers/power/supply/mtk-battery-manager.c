@@ -1152,6 +1152,8 @@ static int bs_psy_get_property(struct power_supply *psy,
 			val->intval = bs_data->bat_capacity;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		if (!bm_ext_gauge_get(psp, &val->intval))
+			break;
 
 		if (bm->gm1 != NULL)
 			if(!bm->gm1->bat_plug_out)
@@ -1199,6 +1201,8 @@ static int bs_psy_get_property(struct power_supply *psy,
 		val->intval = bs_data->bat_capacity * qmax;
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		if (!bm_ext_gauge_get(psp, &val->intval))
+			break;
 
 		count = 0;
 		if (bm->gm1 != NULL)
@@ -1216,6 +1220,8 @@ static int bs_psy_get_property(struct power_supply *psy,
 		ret = 0;
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
+		if (!bm_ext_gauge_get(psp, &val->intval))
+			break;
 
 		count = 0;
 		if (bm->gm1 != NULL)

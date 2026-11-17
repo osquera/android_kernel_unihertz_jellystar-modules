@@ -146,6 +146,8 @@ define_mgk_ddk_ko(
         ":charger_class",
         ":mtk_battery_manager",
         ":mtk_charger_algorithm_class",
+        # Jelly Star: g_is_charger_on/g_charger_type, exported at runtime by the stock fauge module.
+        "//kernel_device_modules-{}/drivers/misc/mediatek/jellystar:fauge_symbols".format(kernel_version),
     ],
     copts = [
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include",
@@ -623,6 +625,27 @@ define_mgk_ddk_ko(
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/power_throttling",
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/typec/tcpc/inc",
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/usb/usb20/",
+        "-I$(DEVICE_MODULES_PATH)/drivers/power/supply/ufcs",
+    ],
+)
+
+# Richtek RT9471 charger (Unihertz Jelly Star). Driver from the MT6789 daylight 5.10 kernel
+# (GPL-2.0, MediaTek/Richtek), ported to 6.12.
+define_mgk_ddk_ko(
+    name = "rt9471",
+    srcs = [
+        "rt9471.c",
+    ],
+    includes = ["."],
+    ko_deps = [
+        ":adapter_class",
+        ":charger_class",
+        ":mtk_charger_framework",
+    ],
+    copts = [
+        "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include",
+        "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/power_throttling",
+        "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/typec/tcpc/inc",
         "-I$(DEVICE_MODULES_PATH)/drivers/power/supply/ufcs",
     ],
 )

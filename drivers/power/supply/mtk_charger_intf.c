@@ -279,7 +279,17 @@ static int get_pmic_vbus(struct mtk_charger *info, int *vchr)
 	int ret;
 
 	chg_psy = power_supply_get_by_name("mtk_charger_type");
-	if (chg_psy == NULL || IS_ERR(chg_psy)) {
+	if ((chg_psy == NULL || IS_ERR(chg_psy)) && info->chan_vbus) {
+		/*
+		 * Jelly Star: PMIC VCDT sees VBUS through the MediaTek 330k/39k divider (as in
+		 * mt6357-charger-type.c); 542 mV here with 5.1 V in.
+		 */
+		ret = iio_read_channel_processed(info->chan_vbus, &prop.intval);
+		if (ret >= 0) {
+			prop.intval = (330 + 39) * prop.intval / 39;
+			ret = 0;
+		}
+	} else if (chg_psy == NULL || IS_ERR(chg_psy)) {
 		chr_err("%s Couldn't get chg_psy\n", __func__);
 		ret = -1;
 	} else {

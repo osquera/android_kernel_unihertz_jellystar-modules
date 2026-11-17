@@ -1489,6 +1489,8 @@ extern int fgauge_get_profile_id(struct mtk_battery *gm);
 extern void disable_fg(struct mtk_battery *gm);
 extern int get_shutdown_cond(struct mtk_battery *gm);
 extern void battery_update(struct mtk_battery_manager *bm);
+/* Jelly Star: read a property from the external fuel gauge (OZ8806), if present. */
+extern int bm_ext_gauge_get(enum power_supply_property psp, int *val);
 extern int set_bm_shutdown_cond(struct mtk_battery_manager *bm, int shutdown_cond);
 extern int get_shutdown_cond_flag(struct mtk_battery *gm);
 extern void set_shutdown_cond_flag(struct mtk_battery *gm, int val);

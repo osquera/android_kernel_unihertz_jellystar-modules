@@ -709,6 +709,48 @@ int set_shutdown_cond(struct mtk_battery *gm, int shutdown_cond)
 /* ============================================================ */
 /* power misc end*/
 /* ============================================================ */
+/*
+ * Jelly Star: the battery level on this phone comes from an external O2Micro OZ8806 fuel gauge
+ * (closed ODM driver, power supply "oz8806"), as on the stock firmware. When it is present, it
+ * provides UI SoC, voltage, current and temperature; MediaTek's own gauge keeps running and its
+ * SoC is logged next to the OZ8806 one for comparison. MediaTek's voltage-based shutdown stays.
+ */
+#define BM_EXT_GAUGE_NAME "oz8806"
+
+int bm_ext_gauge_get(enum power_supply_property psp, int *val)
+{
+	struct power_supply *psy = power_supply_get_by_name(BM_EXT_GAUGE_NAME);
+	union power_supply_propval v;
+	int ret;
+
+	if (!psy)
+		return -ENODEV;
+	ret = power_supply_get_property(psy, psp, &v);
+	power_supply_put(psy);
+	if (!ret)
+		*val = v.intval;
+	return ret;
+}
+
+static void bm_ext_gauge_update(struct mtk_battery_manager *bm, struct battery_data *bat_data)
+{
+	static int last_ext = -1, last_mtk = -1;
+	int soc, uv, deci_c;
+
+	if (bm_ext_gauge_get(POWER_SUPPLY_PROP_CAPACITY, &soc))
+		return;
+	if (soc != last_ext || bm->uisoc != last_mtk) {
+		pr_info("jellystar: soc oz8806=%d mtk=%d\n", soc, bm->uisoc);
+		last_ext = soc;
+		last_mtk = bm->uisoc;
+	}
+	bm->uisoc = soc;
+	if (!bm_ext_gauge_get(POWER_SUPPLY_PROP_VOLTAGE_NOW, &uv))
+		bat_data->bat_batt_vol = uv / 1000;
+	if (!bm_ext_gauge_get(POWER_SUPPLY_PROP_TEMP, &deci_c))
+		bat_data->bat_batt_temp = deci_c / 10;
+}
+
 void battery_update(struct mtk_battery_manager *bm)
 {
 	ktime_t now, duraction;
@@ -837,6 +879,7 @@ void battery_update(struct mtk_battery_manager *bm)
 			gauge_get_property_control(bm->gm1, GAUGE_PROP_BATTERY_VOLTAGE,
 				&bat_data->bat_batt_vol, 0);
 			bm->uisoc = bm->gm1->ui_soc;
+			bm_ext_gauge_update(bm, bat_data);
 		}
 
 		if (battery_get_int_property(bm->gm1, BAT_PROP_DISABLE))
