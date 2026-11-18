@@ -90,3 +90,13 @@ define_mgk_ddk_ko(
         "-I$(srctree)/drivers/power/supply",
     ],
 )
+
+# Jelly Star: Awinic AW2033 RGB LED (front notification LED), replaces the stock module.
+define_mgk_ddk_ko(
+    name = "leds-aw2033",
+    srcs = [
+        "leds-aw2033.c",
+        "leds_aw2033.h",
+    ],
+    includes = ["."],
+)

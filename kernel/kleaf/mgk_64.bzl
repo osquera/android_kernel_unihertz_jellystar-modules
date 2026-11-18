@@ -4917,6 +4917,7 @@ def get_overlay_modules_list():
         "//kernel_device_modules-{}/drivers/power/supply:rt9471".format(kernel_version),
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore".format(kernel_version),
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore_drv".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/leds:leds-aw2033".format(kernel_version),
     ])
 
 

@@ -211,9 +211,11 @@ static void aw2033_led_blink_set(struct aw2033_led *led, unsigned long blinking)
 		msleep(2);
 	}
 
-	led->cdev.brightness = blinking;
-	if (led->cdev.brightness > led->cdev.max_brightness)
-		led->cdev.brightness = led->cdev.max_brightness;
+	/*
+	 * Jelly Star: "blink" is a flag (the lights HAL and the LED app write 1). Blink at full
+	 * brightness, as the stock driver does (it writes PWM 0xff), not at a brightness of 1/255.
+	 */
+	led->cdev.brightness = blinking > 0 ? led->cdev.max_brightness : 0;
 	pr_info("aw2033_led_blink_set %ld %d\n", blinking, led->cdev.brightness);
 	if (blinking > 0) {
 		aw2033_write(led, AW2033_REG_GCR2, led->pdata->imax);
@@ -532,8 +534,7 @@ free_err:
 	return rc;
 }
 
-static int aw2033_led_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
+static int aw2033_led_probe(struct i2c_client *client)
 {
 	struct aw2033_led *led_array;
 	struct device_node *node;
@@ -586,7 +587,7 @@ free_led_arry:
 	return ret;
 }
 
-static int aw2033_led_remove(struct i2c_client *client)
+static void aw2033_led_remove(struct i2c_client *client)
 {
 	struct aw2033_led *led_array = i2c_get_clientdata(client);
 	int i, parsed_leds = led_array->num_leds;
@@ -602,7 +603,6 @@ static int aw2033_led_remove(struct i2c_client *client)
 	mutex_destroy(&led_array->lock);
 	devm_kfree(&client->dev, led_array);
 	led_array = NULL;
-	return 0;
 }
 
 static void aw2033_led_shutdown(struct i2c_client *client)
