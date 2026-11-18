@@ -84,8 +84,9 @@ define_mgk_ddk_ko(
         "//kernel_device_modules-{}/drivers/misc/mediatek/irq_monitor:irq_monitor".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/slbc:mtk_slbc".format(kernel_version),
         "//kernel_device_modules-{}/sound/soc/mediatek/common:mtk-afe-external".format(kernel_version),
-        # Jelly Star: FourSemi FS19xx amp, probed through exfrsm_i2c_probe().
+        # Jelly Star: FourSemi FS19xx and FS16xx amps, probed through exfrsm/exfsm_i2c_probe().
         "//kernel_device_modules-{}/sound/soc/codecs/frsm_i2cd:snd-soc-fs19xx".format(kernel_version),
+        "//kernel_device_modules-{}/sound/soc/codecs/fsm:snd-soc-fsm".format(kernel_version),
     ],
 
     header_deps = [

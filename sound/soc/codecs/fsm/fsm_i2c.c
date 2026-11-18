@@ -448,6 +448,11 @@ static struct of_device_id fsm_match_tbl[] = {
 MODULE_DEVICE_TABLE(of, fsm_match_tbl);
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0))
+/* devm_gpio_free() was removed: the devm GPIOs are released with the device. */
+#define devm_gpio_free(dev, gpio) do { } while (0)
+#endif
+
 static int fsm_i2c_probe(struct i2c_client *i2c,
 						const struct i2c_device_id *id)
 {
@@ -568,6 +573,20 @@ static int fsm_i2c_remove(struct i2c_client *i2c)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
+static int fsm_i2c_probe_new(struct i2c_client *i2c)
+{
+	return fsm_i2c_probe(i2c, NULL);
+}
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void fsm_i2c_remove_void(struct i2c_client *i2c)
+{
+	fsm_i2c_remove(i2c);
+}
+#endif
+
 static const struct i2c_device_id fsm_i2c_id[] = {
 	{ "fs16xx", 0 },
 	{ }
@@ -582,8 +601,16 @@ static struct i2c_driver fsm_i2c_driver = {
 		.of_match_table = of_match_ptr(fsm_match_tbl),
 #endif
 	},
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
+	.probe    = fsm_i2c_probe_new,
+#else
 	.probe    = fsm_i2c_probe,
+#endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+	.remove   = fsm_i2c_remove_void,
+#else
 	.remove   = fsm_i2c_remove,
+#endif
 	.id_table = fsm_i2c_id,
 };
 

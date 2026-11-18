@@ -12,11 +12,18 @@
 #include <linux/kobject.h>
 #include <linux/version.h>
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
+#define fsm_class_t      const struct class
+#define fsm_class_attr_t const struct class_attribute
+#else
+#define fsm_class_t      struct class
+#define fsm_class_attr_t struct class_attribute
+#endif
 
 static int g_fsm_class_inited;
 
-static ssize_t fsm_re25_calib_show(struct class *class,
-							struct class_attribute *attr, char *buf)
+static ssize_t fsm_re25_calib_show(fsm_class_t *class,
+							fsm_class_attr_t *attr, char *buf)
 {
 	struct fsm_cal_result *result = NULL;
 	struct fsm_calib *info;
@@ -46,8 +53,8 @@ static ssize_t fsm_re25_calib_show(struct class *class,
 	return size;
 }
 
-static ssize_t fsm_re25_calib_store(struct class *class,
-							struct class_attribute *attr, const char *buf, size_t len)
+static ssize_t fsm_re25_calib_store(fsm_class_t *class,
+							fsm_class_attr_t *attr, const char *buf, size_t len)
 {
 	int value = simple_strtoul(buf, NULL, 0);
 
@@ -56,8 +63,8 @@ static ssize_t fsm_re25_calib_store(struct class *class,
 	return len;
 }
 
-static ssize_t fsm_f0_calib_show(struct class *class,
-							struct class_attribute *attr, char *buf)
+static ssize_t fsm_f0_calib_show(fsm_class_t *class,
+							fsm_class_attr_t *attr, char *buf)
 {
 	struct fsm_cal_result *result = NULL;
 	struct fsm_calib *data;
@@ -87,8 +94,8 @@ static ssize_t fsm_f0_calib_show(struct class *class,
 	return size;
 }
 
-static ssize_t fsm_f0_calib_store(struct class *class,
-						struct class_attribute *attr, const char *buf, size_t len)
+static ssize_t fsm_f0_calib_store(fsm_class_t *class,
+						fsm_class_attr_t *attr, const char *buf, size_t len)
 {
 	fsm_config_t *cfg = fsm_get_config();
 	int start;
@@ -109,15 +116,15 @@ static ssize_t fsm_f0_calib_store(struct class *class,
 	return len;
 }
 
-static ssize_t fsm_reg_show(struct class *class,
-							struct class_attribute *attr, char *buf)
+static ssize_t fsm_reg_show(fsm_class_t *class,
+							fsm_class_attr_t *attr, char *buf)
 {
 	fsm_dump();
 	return scnprintf(buf, PAGE_SIZE, "%s\n", __func__);
 }
 
-static ssize_t fsm_reg_store(struct class *class,
-							struct class_attribute *attr, const char *buf, size_t len)
+static ssize_t fsm_reg_store(fsm_class_t *class,
+							fsm_class_attr_t *attr, const char *buf, size_t len)
 {
 	int i;
 
@@ -129,8 +136,8 @@ static ssize_t fsm_reg_store(struct class *class,
 	return len;
 }
 
-static ssize_t fsm_dev_info_show(struct class *class,
-							struct class_attribute *attr, char *buf)
+static ssize_t fsm_dev_info_show(fsm_class_t *class,
+							fsm_class_attr_t *attr, char *buf)
 {
 	fsm_version_t version;
 	struct preset_file *pfile;
@@ -154,8 +161,8 @@ static ssize_t fsm_dev_info_show(struct class *class,
 	return len;
 }
 
-static ssize_t fsm_dev_debug_store(struct class *class,
-					struct class_attribute *attr, const char *buf, size_t len)
+static ssize_t fsm_dev_debug_store(fsm_class_t *class,
+					fsm_class_attr_t *attr, const char *buf, size_t len)
 {
 	fsm_config_t *cfg = fsm_get_config();
 	int value = simple_strtoul(buf, NULL, 0);

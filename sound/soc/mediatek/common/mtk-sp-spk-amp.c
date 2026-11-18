@@ -44,11 +44,13 @@
  * DT node (I2C 6-0034), so this driver owns the I2C client and hands it to FourSemi's driver
  * (snd-soc-fs19xx) through exfrsm_i2c_probe(). Without it no amp codec registers, the speaker link
  * ends at the dummy codec and the speaker stays silent. The codec registers on the I2C client, so
- * its name is speaker_amp.<bus>-<addr>. Stock also probes FS16xx amps (snd-soc-fsm) for other
- * hardware batches; that driver isn't built from source yet.
+ * its name is speaker_amp.<bus>-<addr>. Like stock, it then tries the older FourSemi FS16xx amps
+ * (snd-soc-fsm, through exfsm_i2c_probe()), in case other hardware batches use them.
  */
 int exfrsm_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id);
 void exfrsm_i2c_remove(struct i2c_client *i2c);
+int exfsm_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id);
+int exfsm_i2c_remove(struct i2c_client *i2c);
 
 static int jellystar_frsm_i2c_remove(struct i2c_client *i2c)
 {
@@ -87,6 +89,13 @@ static struct mtk_spk_i2c_ctrl mtk_spk_list[MTK_SPK_TYPE_NUM] = {
 		.i2c_probe = exfrsm_i2c_probe,
 		.i2c_remove = jellystar_frsm_i2c_remove,
 		.codec_dai_name = "frsm-codec-aif-1",
+		.codec_name = "speaker_amp.6-0034",
+	},
+
+	[MTK_SPK_FOURSEMI_FS16XX] = {
+		.i2c_probe = exfsm_i2c_probe,
+		.i2c_remove = exfsm_i2c_remove,
+		.codec_dai_name = "fs16xx-aif",
 		.codec_name = "speaker_amp.6-0034",
 	},
 

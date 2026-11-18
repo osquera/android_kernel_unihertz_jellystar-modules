@@ -11,6 +11,7 @@
 #include <linux/moduleparam.h>
 #include <linux/miscdevice.h>
 #include <linux/fs.h>
+#include <linux/version.h>
 
 #define FSM_I2C_MAX_LEN     (8192)
 
@@ -507,7 +508,11 @@ static const struct file_operations g_fsm_misc_ops = {
 	.read    = fsm_misc_read,
 	.write   = fsm_misc_write,
 	.release = fsm_misc_release,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0))
+	.llseek  = noop_llseek,
+#else
 	.llseek  = no_llseek,
+#endif
 	.unlocked_ioctl = fsm_misc_ioctl,
 #if defined(CONFIG_COMPAT)
 	.compat_ioctl = fsm_misc_compat_ioctl,

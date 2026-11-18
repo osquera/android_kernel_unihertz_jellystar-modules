@@ -29,6 +29,9 @@
 #define remove_ret_type int
 #define remove_ret_val (0)
 #endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0))
+#define strlcpy strscpy
+#endif
 
 /* Supported rates and data formats */
 #define FSM_RATES   SNDRV_PCM_RATE_8000_48000

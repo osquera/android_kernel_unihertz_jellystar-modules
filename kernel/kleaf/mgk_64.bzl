@@ -381,6 +381,7 @@ mgk_64_kleaf_device_modules_srcs = [
     "//kernel_device_modules-{}/drivers/tee/tkcore:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/nfc/tms_thn31:srcs".format(kernel_version),
     "//kernel_device_modules-{}/sound/soc/codecs/frsm_i2cd:srcs".format(kernel_version),
+    "//kernel_device_modules-{}/sound/soc/codecs/fsm:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcodec:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcu:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/adsp:srcs".format(kernel_version),
@@ -3018,7 +3019,6 @@ def get_overlay_modules_list():
         mgk_64_kleaf_device_modules.remove("//kernel_device_modules-{}/sound/soc/mediatek/ultrasound/ultra_scp:snd-soc-mtk-scp-ultra".format(kernel_version))
         mgk_64_kleaf_device_modules.remove("//kernel_device_modules-{}/sound/soc/mediatek/vow:mtk-scp-vow".format(kernel_version))
         mgk_64_device_modules.append("sound/soc/codecs/snd-soc-mt6660.ko")
-        mgk_64_device_modules.append("sound/soc/codecs/fs18xx/snd-soc-fsm.ko")
         mgk_64_device_modules.append("sound/soc/codecs/snd-soc-mt6358.ko")
         mgk_64_device_modules.append("drivers/misc/mediatek/spi_slave_drv/spi_slave.ko")
         mgk_64_kleaf_platform_modules.pop("//kernel_device_modules-{}/drivers/gpu/mediatek/gpu_pdma:mtk_gpu_pdma_mt6991".format(kernel_version))
@@ -4923,6 +4923,7 @@ def get_overlay_modules_list():
         "//kernel_device_modules-{}/drivers/leds:leds-aw2033".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/nfc/tms_thn31:tms_thn31".format(kernel_version),
         "//kernel_device_modules-{}/sound/soc/codecs/frsm_i2cd:snd-soc-fs19xx".format(kernel_version),
+        "//kernel_device_modules-{}/sound/soc/codecs/fsm:snd-soc-fsm".format(kernel_version),
     ])
 
 

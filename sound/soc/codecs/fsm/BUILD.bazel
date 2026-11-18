@@ -1,0 +1,36 @@
+# Jelly Star: FourSemi FS16xx amplifier driver, built as the stock module snd-soc-fsm.
+# mtk-sp-spk-amp owns the amp's I2C client and probes it through exfsm_i2c_probe(), as on
+# stock. fsm_i2c.c #includes the class, codec, firmware and misc parts, so those are headers.
+load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "**/*.c",
+        "**/*.h",
+    ]),
+)
+
+define_mgk_ddk_ko(
+    name = "snd-soc-fsm",
+    srcs = glob([
+        "**/*.h",
+    ]) + [
+        "fsm_core.c",
+        "fsm_i2c.c",
+        "fs16xx/fs1603.c",
+    ],
+    hdrs = [
+        "fsm_class.c",
+        "fsm_codec.c",
+        "fsm_firmware.c",
+        "fsm_misc.c",
+    ],
+    includes = ["."],
+)
