@@ -12,6 +12,16 @@
 #define SUPPORT_CHIPSET_LIST     "THN31|THN31F|THN31F-A|THN31S|THN31DZ"
 #define INVALID_ID    -1
 
+/*
+ * Jelly Star: OnePlus reads the NFC chip variant of "mixed-chipset" boards from a hardware ID
+ * provided by its own module. This board has one NFC chip and no mixed-chipset property, so that
+ * path never runs; report no ID instead of depending on the OnePlus module.
+ */
+static int get_nfc_id(void)
+{
+    return INVALID_ID;
+}
+
 struct id_entry {
     u32 key;
     const char *chipset;
@@ -468,7 +478,7 @@ static int nfc_device_close(struct inode *inode, struct file *file)
 
 static const struct file_operations nfc_fops = {
     .owner          = THIS_MODULE,
-    .llseek         = no_llseek,
+    .llseek         = noop_llseek, /* Jelly Star: no_llseek was removed in 6.12 */
     .open           = nfc_device_open,
     .release        = nfc_device_close,
     .read           = nfc_device_read,

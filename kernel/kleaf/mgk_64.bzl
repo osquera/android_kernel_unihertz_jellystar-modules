@@ -379,6 +379,7 @@ mgk_64_kleaf_device_modules_srcs = [
     "//kernel_device_modules-{}/drivers/memory/mediatek:makefiles".format(kernel_version),
     "//kernel_device_modules-{}/drivers/tee/teeperf:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/tee/tkcore:srcs".format(kernel_version),
+    "//kernel_device_modules-{}/drivers/misc/mediatek/nfc/tms_thn31:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcodec:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcu:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/adsp:srcs".format(kernel_version),
@@ -590,6 +591,7 @@ mgk_64_kleaf_device_modules_kconfigs = [
     "//kernel_device_modules-{}/drivers/memory/mediatek:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/tee/teeperf:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/tee/tkcore:ddk_kconfigs".format(kernel_version),
+    "//kernel_device_modules-{}/drivers/misc/mediatek/nfc/tms_thn31:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcodec:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/mfd:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/adsp:ddk_kconfigs".format(kernel_version),
@@ -4918,6 +4920,7 @@ def get_overlay_modules_list():
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore".format(kernel_version),
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore_drv".format(kernel_version),
         "//kernel_device_modules-{}/drivers/leds:leds-aw2033".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/misc/mediatek/nfc/tms_thn31:tms_thn31".format(kernel_version),
     ])
 
 

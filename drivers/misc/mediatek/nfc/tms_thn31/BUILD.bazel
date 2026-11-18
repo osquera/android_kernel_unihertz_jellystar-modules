@@ -1,0 +1,43 @@
+# Jelly Star: TMS THN31 NFC (Kleaf build of the original Makefile: common, debugger and NFC
+# driver in one module, no eSE). Without the guide driver: in this tree it is out of step with the
+# NFC code (it calls functions nfc_common doesn't have), and the NFC driver then binds tms,nfc
+# itself. The guide only identifies the chip before handing over to the NFC driver.
+load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+filegroup(
+    name = "ddk_kconfigs",
+    srcs = ["Kconfig"],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "**/*.c",
+        "**/*.h",
+        "Kconfig",
+        "Makefile",
+    ]),
+)
+
+define_mgk_ddk_ko(
+    name = "tms_thn31",
+    srcs = glob([
+        "*.c",
+        "*.h",
+        "debuger/*.c",
+        "debuger/*.h",
+        "nfc/*.c",
+        "nfc/*.h",
+    ]),
+    includes = ["."],
+    local_defines = [
+        "TMS_DEBUGER_LOGGER",
+        "TMS_DEBUGER_CHECKER",
+    ],
+)
