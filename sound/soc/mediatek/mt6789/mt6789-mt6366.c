@@ -30,11 +30,21 @@
  */
 #define EXT_SPK_AMP_W_NAME "Ext_Speaker_Amp"
 
-static const char *const mt6789_spk_type_str[] = {MTK_SPK_NOT_SMARTPA_STR,
-						  MTK_SPK_RICHTEK_RT5509_STR,
-						  MTK_SPK_MEDIATEK_MT6660_STR,
-						  MTK_SPK_RICHTEK_RT5512_STR,
-						  MTK_SPK_GOODIX_TFA98XX_STR};
+/*
+ * Jelly Star: indexed by enum mtk_spk_type, since the "MTK_SPK_TYPE_GET" control returns that
+ * value (the original list was shorter and out of order, so FourSemi's type had no name).
+ */
+static const char *const mt6789_spk_type_str[MTK_SPK_TYPE_NUM] = {
+	[MTK_SPK_NOT_SMARTPA] = MTK_SPK_NOT_SMARTPA_STR,
+	[MTK_SPK_RICHTEK_RT5509] = MTK_SPK_RICHTEK_RT5509_STR,
+	[MTK_SPK_MEDIATEK_MT6660] = MTK_SPK_MEDIATEK_MT6660_STR,
+	[MTK_SPK_GOODIX_TFA98XX] = MTK_SPK_GOODIX_TFA98XX_STR,
+	[MTK_SPK_MEDIATEK_RT5512] = MTK_SPK_RICHTEK_RT5512_STR,
+	[MTK_SPK_AWINIC_AW883XX] = MTK_SPK_AWINIC_AW883XX_STR,
+	[MTK_SPK_AKM_AK7709] = MTK_SPK_AKM_AK7709_STR,
+	[MTK_SPK_FOURSEMI_FRSM] = MTK_SPK_FOURSEMI_FRSM_STR,
+	[MTK_SPK_FOURSEMI_FS16XX] = MTK_SPK_FOURSEMI_FS16XX_STR,
+};
 static const char *const
 	mt6789_spk_i2s_type_str[] = {MTK_SPK_I2S_0_STR,
 				     MTK_SPK_I2S_1_STR,

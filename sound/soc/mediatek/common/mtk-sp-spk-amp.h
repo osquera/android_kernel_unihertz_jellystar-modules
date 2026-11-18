@@ -25,6 +25,8 @@ struct mtk_spk_i2c_ctrl {
 #define MTK_SPK_GOODIX_TFA98XX_STR "MTK_SPK_GOODIX_TFAXXXX"
 #define MTK_SPK_AKM_AK7709_STR "MTK_SPK_AKM_AK7709"
 #define MTK_SPK_FOURSEMI_FS16XX_STR "MTK_SPK_FOURSEMI_FS16XX"
+/* Jelly Star: the stock machine driver names the FourSemi type like this. */
+#define MTK_SPK_FOURSEMI_FRSM_STR "MTK_SPK_FOURSEMI_FS1894"
 
 #define MTK_SPK_I2S_0_STR "MTK_SPK_I2S_0"
 #define MTK_SPK_I2S_1_STR "MTK_SPK_I2S_1"
@@ -65,6 +67,7 @@ enum mtk_spk_type {
 	MTK_SPK_MEDIATEK_RT5512,
 	MTK_SPK_AWINIC_AW883XX,
 	MTK_SPK_AKM_AK7709,
+	MTK_SPK_FOURSEMI_FRSM,	/* Jelly Star: FourSemi FS19xx (frsm); tried before FS16XX */
 	MTK_SPK_FOURSEMI_FS16XX,
 	MTK_SPK_TYPE_NUM
 };

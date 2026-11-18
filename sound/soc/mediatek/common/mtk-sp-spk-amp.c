@@ -39,6 +39,23 @@
 #include "../audio_scp/mtk-scp-audio-pcm.h"
 #endif
 
+/*
+ * Jelly Star: FourSemi FS19xx smart PA, as in the stock dispatcher. The amp shares the speaker_amp
+ * DT node (I2C 6-0034), so this driver owns the I2C client and hands it to FourSemi's driver
+ * (snd-soc-fs19xx) through exfrsm_i2c_probe(). Without it no amp codec registers, the speaker link
+ * ends at the dummy codec and the speaker stays silent. The codec registers on the I2C client, so
+ * its name is speaker_amp.<bus>-<addr>. Stock also probes FS16xx amps (snd-soc-fsm) for other
+ * hardware batches; that driver isn't built from source yet.
+ */
+int exfrsm_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id);
+void exfrsm_i2c_remove(struct i2c_client *i2c);
+
+static int jellystar_frsm_i2c_remove(struct i2c_client *i2c)
+{
+	exfrsm_i2c_remove(i2c);
+	return 0;
+}
+
 #define MTK_SPK_NAME "Speaker Codec"
 #define MTK_SPK_REF_NAME "Speaker Codec Ref"
 
@@ -65,6 +82,13 @@ static struct mtk_spk_i2c_ctrl mtk_spk_list[MTK_SPK_TYPE_NUM] = {
 		.codec_name = "RT5512_MT_0",
 	},
 #endif /* CONFIG_SND_SOC_RT5512 */
+
+	[MTK_SPK_FOURSEMI_FRSM] = {
+		.i2c_probe = exfrsm_i2c_probe,
+		.i2c_remove = jellystar_frsm_i2c_remove,
+		.codec_dai_name = "frsm-codec-aif-1",
+		.codec_name = "speaker_amp.6-0034",
+	},
 
 #if IS_ENABLED(CONFIG_SND_SOC_TFA9874)
 	[MTK_SPK_GOODIX_TFA98XX] = {
