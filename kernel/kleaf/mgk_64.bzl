@@ -378,6 +378,7 @@ mgk_64_kleaf_device_modules_srcs = [
     "//kernel_device_modules-{}/drivers/mfd:ddk_src".format(kernel_version),
     "//kernel_device_modules-{}/drivers/memory/mediatek:makefiles".format(kernel_version),
     "//kernel_device_modules-{}/drivers/tee/teeperf:srcs".format(kernel_version),
+    "//kernel_device_modules-{}/drivers/tee/tkcore:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcodec:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcu:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/adsp:srcs".format(kernel_version),
@@ -588,6 +589,7 @@ mgk_64_kleaf_device_modules_kconfigs = [
     "//kernel_device_modules-{}/drivers/nvmem:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/memory/mediatek:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/tee/teeperf:ddk_kconfigs".format(kernel_version),
+    "//kernel_device_modules-{}/drivers/tee/tkcore:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcodec:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/mfd:ddk_kconfigs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/adsp:ddk_kconfigs".format(kernel_version),
@@ -4913,6 +4915,8 @@ def get_overlay_modules_list():
         "//kernel_device_modules-{}/drivers/misc/mediatek/jellystar:agold_compat".format(kernel_version),
         "//kernel_device_modules-{}/drivers/gpu/drm/panel:panel-unihertz-jellystar-st7701s".format(kernel_version),
         "//kernel_device_modules-{}/drivers/power/supply:rt9471".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore_drv".format(kernel_version),
     ])
 
 

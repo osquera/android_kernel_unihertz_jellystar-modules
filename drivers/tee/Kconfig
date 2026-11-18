@@ -20,3 +20,7 @@ source "$(KCONFIG_EXT_PREFIX)drivers/tee/teei/Kconfig"
 endmenu
 
 endif
+
+# TrustKernel brings its own TEE core and doesn't use the kernel's TEE subsystem (CONFIG_TEE is
+# off in GKI), so it stays outside the "if TEE" block above.
+source "$(KCONFIG_EXT_PREFIX)drivers/tee/tkcore/Kconfig"

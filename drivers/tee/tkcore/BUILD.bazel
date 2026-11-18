@@ -39,9 +39,7 @@ filegroup(
 	]),
 )
 
-# trusted_mem package with symbol and header files
 mgk_package = "//kernel_device_modules-{}".format(kernel_version)
-tmem_package = "{}/drivers/misc/mediatek/trusted_mem".format(mgk_package)
 
 ddk_headers(
 	name = "tkcore_public_hdrs",
@@ -166,8 +164,9 @@ define_mgk_ddk_ko(
 		":tkcore_armtz_source",
 	],
 	out = "tkcore_drv.ko",
+	# Jelly Star: no trusted_mem ffa dependency; MT6789 reaches the TEE by SMC, and the FF-A
+	# path in tee_tz_drv.c is only built when the kernel has CONFIG_ARM_FFA_TRANSPORT.
 	ko_deps = [
-		"{}:ffa".format(tmem_package),
 		"{}/drivers/tee/tkcore:tkcore".format(mgk_package),
 	],
 	hdrs = [
