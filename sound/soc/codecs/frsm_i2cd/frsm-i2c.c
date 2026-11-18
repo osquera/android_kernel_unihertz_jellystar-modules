@@ -28,11 +28,23 @@
 #include "fs18v1-ops.h"
 #include "fs18v4-ops.h"
 #include "frsm-i2c-amp.h"
+#ifndef FRSM_COMPAT_EXPORT /* Jelly Star: Xiaomi dispatcher API, see exfrsm_i2c_probe() */
 #include  "../../mediatek/common/mtk-sp-spk-amp.h"
+#endif
 
 #if IS_ENABLED(CONFIG_MIEV)
 #include <miev/mievent.h>
 #endif
+
+/*
+ * Jelly Star: Xiaomi's speaker amp dispatcher chooses between several amp drivers. MediaTek's
+ * dispatcher used here hands the amp to this driver through exfrsm_i2c_probe() instead, so this
+ * driver is always the one responsible.
+ */
+static inline bool check_smartpa_type(const char *type)
+{
+	return true;
+}
 
 #define FRSM_I2C_NAME    "frsm_i2c"
 #define FRSM_I2C_VERSION "v5.3.1.1"
@@ -970,8 +982,10 @@ static int frsm_i2c_probe(struct i2c_client *i2c
 	frsm_i2c_amp_init(frsm_dev);
 	frsm_amp_register_notify_callback(frsm_i2c_notify_callback);
 
+#ifndef FRSM_COMPAT_EXPORT /* Jelly Star: MediaTek's dispatcher sets the type itself */
 	set_smartpa_type("fs19xx", sizeof("fs19xx"));
 	mtk_spk_set_type(MTK_SPK_FS_FS19xx);
+#endif
 
 	g_frsm_ndev++;
 	dev_info(&i2c->dev, "i2c probed\n");
@@ -1030,7 +1044,7 @@ static const struct of_device_id frsm_of_id[] = {
 MODULE_DEVICE_TABLE(of, frsm_of_id);
 #endif
 
-static struct i2c_driver frsm_i2c_driver = {
+static struct i2c_driver frsm_i2c_driver __maybe_unused = {
 	.driver = {
 		.name = FRSM_I2C_NAME,
 #ifdef CONFIG_OF
@@ -1044,6 +1058,43 @@ static struct i2c_driver frsm_i2c_driver = {
 	.id_table = frsm_i2c_id,
 };
 
+#ifdef FRSM_COMPAT_EXPORT
+/*
+ * Jelly Star: FourSemi's compat export mode, as in the stock module. The amp shares MediaTek's
+ * speaker_amp DT node, so mtk-sp-spk-amp owns the I2C client and calls these instead of this
+ * driver binding the chip itself.
+ */
+int exfrsm_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
+{
+#if KERNEL_VERSION_HIGHER(6, 3, 0)
+	return frsm_i2c_probe(i2c);
+#else
+	return frsm_i2c_probe(i2c, id);
+#endif
+}
+EXPORT_SYMBOL_GPL(exfrsm_i2c_probe);
+
+void exfrsm_i2c_remove(struct i2c_client *i2c)
+{
+	frsm_i2c_remove(i2c);
+}
+EXPORT_SYMBOL_GPL(exfrsm_i2c_remove);
+
+void exfrsm_i2c_shutdown(struct i2c_client *i2c)
+{
+	frsm_i2c_shutdown(i2c);
+}
+EXPORT_SYMBOL_GPL(exfrsm_i2c_shutdown);
+
+int frsm_i2c_driver_register(void)
+{
+	return 0;
+}
+
+void frsm_i2c_driver_unregister(void)
+{
+}
+#else
 int frsm_i2c_driver_register(void)
 {
 	return i2c_add_driver(&frsm_i2c_driver);
@@ -1053,6 +1104,7 @@ void frsm_i2c_driver_unregister(void)
 {
 	i2c_del_driver(&frsm_i2c_driver);
 }
+#endif /* FRSM_COMPAT_EXPORT */
 
 
 static int __init frsm_drv_init(void)

@@ -19,7 +19,8 @@
 #if IS_ENABLED(CONFIG_SND_SOC_MSM_QDSP6V2_INTF)
 #include "frsm-qcom-afe.h"
 #endif
-#if IS_ENABLED(CONFIG_SND_SOC_MTK_AUDIO_DSP)
+/* Jelly Star: no ADSP protection path, as the stock module (it imports no DSP IPI calls). */
+#if IS_ENABLED(CONFIG_SND_SOC_MTK_AUDIO_DSP) && !defined(FRSM_NO_ADSP)
 #include "frsm-mtk-ipi.h"
 #endif
 
@@ -780,12 +781,13 @@ static int frsm_amp_probe(struct platform_device *pdev)
 	return ret;
 }
 
-static int frsm_amp_remove(struct platform_device *pdev)
+/* Jelly Star: platform remove returns void since 6.11 */
+static void frsm_amp_remove(struct platform_device *pdev)
 {
 	struct frsm_amp *frsm_amp = platform_get_drvdata(pdev);
 
 	if (frsm_amp == NULL)
-		return 0;
+		return;
 
 	frsm_amp_misc_deinit(frsm_amp);
 
@@ -796,8 +798,6 @@ static int frsm_amp_remove(struct platform_device *pdev)
 	}
 
 	frsm_amp_class_deinit(frsm_amp);
-
-	return 0;
 }
 
 static const struct of_device_id frsm_amp_of_match[] = {
