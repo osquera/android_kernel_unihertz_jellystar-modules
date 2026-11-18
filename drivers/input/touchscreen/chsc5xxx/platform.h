@@ -20,7 +20,7 @@
 #define SEMI_TOUCH_GESTURE_OPEN                 1
 #define SEMI_TOUCH_GLOVE_OPEN                   1
 #define SEMI_TOUCH_APK_NODE_EN                  1
-#define SEMI_TOUCH_ONLINE_UPDATE_EN             1
+#define SEMI_TOUCH_ONLINE_UPDATE_EN             0
 #define SEMI_TOUCH_BOOTUP_UPDATE_EN             0
 
 #define SEMI_TOUCH_DMA_TRANSFER                 0
@@ -28,14 +28,14 @@
 #define SEMI_TOUCH_SUSPEND_BY_TPCMD             1
 #define SEMI_TOUCH_VKEY_MAPPING                 1
 #define SEMI_TOUCH_MAX_POINTS                   5
-#define SEMI_TOUCH_SOLUTION_X                   720
-#define SEMI_TOUCH_SOLUTION_Y                   1440
+#define SEMI_TOUCH_SOLUTION_X                   480
+#define SEMI_TOUCH_SOLUTION_Y                   854
 #define CHSC_DEVICE_NAME                        "semi_touch"
 #define CHSC_AUTO_UPDATE_PACKET_BIN             "/sdcard/chsc_auto_update_packet.bin"
 
 #define TYPE_OF_IC(X)                           ((X) & 0xff00)
 #define MAX_VKEY_NUMBER                         5
-#define SEMI_TOUCH_KEY_EVT                      {KEY_MENU, KEY_HOME, KEY_BACK, KEY_VOLUMEUP, KEY_VOLUMEDOWN}
+#define SEMI_TOUCH_KEY_EVT                      {KEY_BACK, KEY_HOMEPAGE, KEY_APPSELECT, KEY_RESERVED, KEY_RESERVED}
 
 
 /*******************************************************************************************/

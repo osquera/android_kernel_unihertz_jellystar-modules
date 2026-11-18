@@ -40,6 +40,7 @@ static ssize_t cts_touch_glove_store(struct device *dev, struct device_attribute
 static DEVICE_ATTR(state,0664, cts_touch_glove_show, cts_touch_glove_store);
 #endif
 
+#if 0 /* Jelly Star: BSP-specific gesture node (no mediatek,gesture DT node here; not in stock) */
 /* DRV added by wangwei1, gesture mode, start */
 int semi_is_gesture_wakeup_enabled(void)
 {
@@ -124,6 +125,7 @@ int semi_gesture_init(void)
 	return platform_driver_register(&gesture_driver);
 }
 /* DRV added by wangwei1, gesture mode, end */
+#endif
 
 
 #if SEMI_TOUCH_MAKE_NODES_DIR == MAKE_NODE_UNDER_PROC
@@ -266,7 +268,7 @@ ret = 0
 #define chsc_esd_check_node_read_declare() chsc_esd_check_node_read(struct kobject* dev, struct kobj_attribute* attr, char* buff)
 #endif //SEMI_TOUCH_MAKE_NODES_DIR == MAKE_NDDE_UNDER_SYS
 
-const char* const mapping_ic_from_type(unsigned char ictype)
+const char* mapping_ic_from_type(unsigned char ictype)
 {
     static char *ic_name = "un-defined";
 
@@ -874,9 +876,6 @@ int semi_touch_custom_work(struct sm_touch_dev *st_dev)
     // TP_VENDOR  = readBuffer[4];
     // TP_PRODUCT = readBuffer[3] << 8) + readBuffer[2];
 
-	/* DRV added by wangwei1, gesture mode, start */
-	semi_gesture_init();
-	/* DRV added by wangwei1, gesture mode, end */
 
     return ret;
 }

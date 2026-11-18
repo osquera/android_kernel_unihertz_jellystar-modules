@@ -3,7 +3,6 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/cdev.h>
-#include <linux/ide.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
@@ -11,6 +10,7 @@
 #include <linux/of_irq.h>
 #include <linux/i2c.h>
 #include <linux/regulator/consumer.h>
+#include <linux/version.h>
 
 #include "semi_touch_interface.h"
 
@@ -22,6 +22,7 @@ extern struct hardware_info current_tp_info;
 static const struct of_device_id sm_of_match[] = 
 {
     {.compatible = "chipsemi,chsc_cap_touch", },
+    {.compatible = "mediatek,cap_touch", }, /* Jelly Star: the node stock binds to */
     {}
 };
 
@@ -71,7 +72,11 @@ int semi_touch_get_irq(int rst_pin)
 {
     int irq_no = 0;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
+    gpiod_set_debounce(gpio_to_desc(rst_pin), 50);
+#else
     gpio_set_debounce(rst_pin, 50);
+#endif
 
     irq_no = gpio_to_irq(rst_pin);
 
@@ -325,7 +330,44 @@ static const struct dev_pm_ops semi_touch_dev_pm_ops =
 };
 #endif
 
-#if defined(CONFIG_FB)
+#if defined(SEMI_TOUCH_MTK_DISP_NOTIFY)
+/* MediaTek: the display driver's blank notifier (mtk_disp_notify) */
+#include <linux/notifier.h>
+#include "mtk_disp_notify.h"
+struct notifier_block sm_fb_notify;
+static int semi_touch_fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
+{
+    int *blank = data;
+
+    if(!blank || !st_dev.client)
+        return 0;
+
+    /* suspend before the panel goes off, resume once it is back on */
+    if(MTK_DISP_EARLY_EVENT_BLANK == event && MTK_DISP_BLANK_POWERDOWN == *blank)
+        semi_touch_suspend_entry(&st_dev.client->dev);
+    else if(MTK_DISP_EVENT_BLANK == event && MTK_DISP_BLANK_UNBLANK == *blank)
+        semi_touch_resume_entry(&st_dev.client->dev);
+
+    return 0;
+}
+int semi_touch_work_done(void)
+{
+    int ret = 0;
+    ret = semi_touch_vkey_initialize();
+    check_return_if_fail(ret, NULL);
+
+    sm_fb_notify.notifier_call = semi_touch_fb_notifier_callback;
+    ret = mtk_disp_notifier_register("chsc5xxx_touch", &sm_fb_notify);
+    check_return_if_fail(ret, NULL);
+
+    return ret;
+}
+int semi_touch_resource_release(void)
+{
+    mtk_disp_notifier_unregister(&sm_fb_notify);
+    return semi_touch_platform_variety();
+}
+#elif defined(CONFIG_FB)
 #include <linux/notifier.h>
 #include <linux/fb.h>
 struct notifier_block sm_fb_notify;
@@ -476,7 +518,7 @@ int semi_touch_resource_release(void)
 }
 #endif
 
-static ssize_t chsc_version_hardinfo()
+static ssize_t chsc_version_hardinfo(void)
 {
     int ret;
     unsigned char readBuffer[8] = {0};
@@ -539,6 +581,20 @@ static int semi_touch_remove(struct i2c_client *client)
 
     return ret;
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
+static int semi_touch_probe_new(struct i2c_client *client)
+{
+    return semi_touch_probe(client, NULL);
+}
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void semi_touch_remove_void(struct i2c_client *client)
+{
+    semi_touch_remove(client);
+}
+#endif
 
 int semi_touch_suspend_entry(struct device* dev)
 {
@@ -626,8 +682,16 @@ static struct i2c_driver sm_touch_driver =
 #endif
     },
     .id_table = sm_ts_id,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
+    .probe = semi_touch_probe_new,
+#else
     .probe = semi_touch_probe,
+#endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+    .remove = semi_touch_remove_void,
+#else
     .remove = semi_touch_remove,
+#endif
 };
 
 static int __init i2c_device_init(void)

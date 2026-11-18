@@ -3,7 +3,6 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/cdev.h>
-#include <linux/ide.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
@@ -98,7 +97,7 @@ static irqreturn_t semi_touch_irq_handler_imp(int irq, void *p)
     bool pointed = 0;
     int  index = 0, pointNum = 0/*, ioLevel = 0*/;
     union rpt_point_t* ppt;
-    const unsigned char report_size = ((SEMI_TOUCH_MAX_POINTS * 5 + 2) + 3) & 0xfc;
+#define report_size (((SEMI_TOUCH_MAX_POINTS * 5 + 2) + 3) & 0xfc)
 	unsigned char readbuffer[report_size];
 
     //kernel_log_d("st_dev.stc.ctp_run_status = 0x%x\n", st_dev.stc.ctp_run_status);

@@ -1,0 +1,45 @@
+# Jelly Star: Chipsemi CHSC5xxx touch driver, built as the stock module chsc5xxx_touch.
+# SEMI_TOUCH_MTK_DISP_NOTIFY: suspend/resume on MediaTek's display blank notifier, as stock.
+load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
+load("@mgk_info//:kernel_version.bzl", "kernel_version")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "*.c",
+        "*.h",
+        "Makefile",
+    ]),
+)
+
+define_mgk_ddk_ko(
+    name = "chsc5xxx_touch",
+    srcs = glob([
+        "*.h",
+    ]) + [
+        "basic_util.c",
+        "i2c_communication.c",
+        "qual_core.c",
+        "semi_touch_apk.c",
+        "semi_touch_custom.c",
+        "semi_touch_device.c",
+        "semi_touch_function.c",
+        "semi_touch_upgrade.c",
+    ],
+    includes = ["."],
+    copts = [
+        "-I$(DEVICE_MODULES_PATH)/drivers/gpu/drm/mediatek/mediatek_v2/",
+    ],
+    local_defines = [
+        "SEMI_TOUCH_MTK_DISP_NOTIFY",
+    ],
+    ko_deps = [
+        "//kernel_device_modules-{}/drivers/gpu/drm/mediatek/mediatek_v2:mtk_disp_notify".format(kernel_version),
+    ],
+)

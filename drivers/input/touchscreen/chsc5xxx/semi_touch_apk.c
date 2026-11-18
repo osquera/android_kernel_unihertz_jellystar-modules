@@ -332,7 +332,15 @@ static long semi_touch_ioctl(struct file* fp, unsigned int op_type, unsigned lon
     return 0;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops semi_touch_proc_opts =
+{
+    .proc_write = semi_touch_proc_write,
+    .proc_read  = semi_touch_proc_read,
+    .proc_compat_ioctl = semi_touch_ioctl,
+    .proc_ioctl = semi_touch_ioctl,
+};
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 static const struct file_operations semi_touch_proc_opts = 
 {
     .owner = THIS_MODULE,
@@ -353,7 +361,8 @@ int semi_touch_create_apk_proc(struct sm_touch_dev* st_dev)
     semi_touch_create_work_queue(work_queue_custom_work, typename(work_queue_custom_work));
     
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
-    st_dev->proc_entry = proc_create(SEMI_TOUCH_PROC_NAME, 0777, NULL, &semi_touch_proc_opts);
+    /* Jelly Star: root only, the node gives raw access to the chip (0777 in the source) */
+    st_dev->proc_entry = proc_create(SEMI_TOUCH_PROC_NAME, 0600, NULL, &semi_touch_proc_opts);
     check_return_if_zero(st_dev->proc_entry, NULL);
 #else
     st_dev->proc_entry = create_proc_entry(SEMI_TOUCH_PROC_NAME, 0777, NULL);

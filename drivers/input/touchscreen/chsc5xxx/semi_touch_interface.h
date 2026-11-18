@@ -79,7 +79,7 @@ irqreturn_t semi_touch_clear_report(void);
 #define MAKE_NODE_UNDER_PROC                  0
 #define MAKE_NDDE_UNDER_SYS                   1
 #define SEMI_TOUCH_PROC_DIR                   "touchscreen"
-#define SEMI_TOUCH_MAKE_NODES_DIR             MAKE_NODE_UNDER_PROC
+#define SEMI_TOUCH_MAKE_NODES_DIR             MAKE_NDDE_UNDER_SYS
 int semi_touch_custom_work(struct sm_touch_dev *st_dev);
 int semi_touch_custom_clean_up(void);
 int semi_touch_wake_lock(void);
