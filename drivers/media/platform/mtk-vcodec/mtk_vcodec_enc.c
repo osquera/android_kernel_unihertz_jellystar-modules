@@ -3997,13 +3997,9 @@ static int mtk_venc_worker_loop(void *arg)
 	struct mtk_vcodec_dev *dev = (struct mtk_vcodec_dev *)arg;
 	struct mtk_vcodec_ctx *ctx;
 	int ret;
-/* #ifndef OPLUS_BUG_STABILITY */
+
 	// non-rt thread priority, MAX_NICE(+19)(low priority) to MIN_NICE(-20)(high priority) (+120)
-	/*set_user_nice(current, MIN_NICE + 2);*/
-/* #else */
-	struct sched_param sched_p = { .sched_priority = MTK_VCODEC_IPI_THREAD_PRIORITY };
-	sched_setscheduler(current, SCHED_FIFO, &sched_p);
-/* #endif //OPLUS_BUG_STABILITY */
+	set_user_nice(current, MIN_NICE + 2);
 
 	do {
 		ret = wait_event_interruptible(dev->worker_mq.wq, atomic_read(&dev->worker_mq.cnt) > 0);
