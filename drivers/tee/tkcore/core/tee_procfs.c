@@ -39,7 +39,12 @@
 #include "tee_core_priv.h"
 
 #define TEE_LOG_TIMEOUT_MS	(500)
-#define ENABLE_PRINTK_TEE_LOG
+/*
+ * Jelly Star: don't copy the TEE's log into the kernel log. The fingerprint TA logs at debug
+ * level and fills the kernel log within a second; the TEE log stays readable in
+ * /proc/tkcore/tkcore_log.
+ */
+/* #define ENABLE_PRINTK_TEE_LOG */
 
 struct proc_dir_entry *tee_proc_dir;
 
