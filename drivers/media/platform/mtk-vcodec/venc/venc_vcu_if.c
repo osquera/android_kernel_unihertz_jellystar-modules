@@ -151,7 +151,6 @@ int vcu_enc_ipi_handler(void *data, unsigned int len, void *priv)
 	struct list_head *p, *q;
 	struct mtk_vcodec_ctx *temp_ctx;
 	int msg_valid = 0;
-	int lock = -1;
 
 	BUILD_BUG_ON(sizeof(struct venc_ap_ipi_msg_init) > SHARE_BUF_SIZE);
 	BUILD_BUG_ON(sizeof(struct venc_ap_ipi_query_cap) > SHARE_BUF_SIZE);
@@ -230,27 +229,14 @@ int vcu_enc_ipi_handler(void *data, unsigned int len, void *priv)
 	case VCU_IPIMSG_ENC_POWER_ON:
 		/*use status to store core ID*/
 		ctx->sysram_enable = vsi->config.sysram_enable;
-		VCU_FPTR(vcu_get_gce_lock)(vcu->dev, VCU_VENC);
-		while (lock != 0) {
-			lock = venc_lock(ctx, 0, true);
-			if (lock != 0) {
-				VCU_FPTR(vcu_put_gce_lock)(vcu->dev, VCU_VENC);
-				usleep_range(1000, 2000);
-				VCU_FPTR(vcu_get_gce_lock)(vcu->dev, VCU_VENC);
-			}
-		}
 		venc_encode_prepare(ctx, msg->status, &flags);
-		VCU_FPTR(vcu_put_gce_lock)(vcu->dev, VCU_VENC);
 		msg->status = VENC_IPI_MSG_STATUS_OK;
 		ret = 1;
 		break;
 	case VCU_IPIMSG_ENC_POWER_OFF:
 		/*use status to store core ID*/
-		VCU_FPTR(vcu_get_gce_lock)(vcu->dev, VCU_VENC);
 		ctx->sysram_enable = vsi->config.sysram_enable;
 		venc_encode_unprepare(ctx, msg->status, &flags);
-		venc_unlock(ctx, 0);
-		VCU_FPTR(vcu_put_gce_lock)(vcu->dev, VCU_VENC);
 		msg->status = VENC_IPI_MSG_STATUS_OK;
 		ret = 1;
 		break;
@@ -605,12 +591,16 @@ int vcu_enc_set_param(struct venc_vcu_inst *vcu,
 		out.data[0] = enc_param->highquality;
 		break;
 	case VENC_SET_PARAM_ADJUST_MAX_QP:
-		out.data_item = 1;
-		out.data[0] = enc_param->max_qp;
+		out.data_item = 3;
+		out.data[0] = enc_param->i_max_qp;
+		out.data[1] = enc_param->p_max_qp;
+		out.data[2] = enc_param->b_max_qp;
 		break;
 	case VENC_SET_PARAM_ADJUST_MIN_QP:
-		out.data_item = 1;
-		out.data[0] = enc_param->min_qp;
+		out.data_item = 3;
+		out.data[0] = enc_param->i_min_qp;
+		out.data[1] = enc_param->p_min_qp;
+		out.data[2] = enc_param->b_min_qp;
 		break;
 	case VENC_SET_PARAM_ADJUST_I_P_QP_DELTA:
 		out.data_item = 1;
@@ -746,7 +736,7 @@ int vcu_enc_encode(struct venc_vcu_inst *vcu, unsigned int bs_mode,
 			vsi->qprects_meta_size = 0;
 		}
 
-		if (frm_buf->dyparams_dma) {
+		if (frm_buf->dyparams_dma_addr) {
 			vsi->dynamicparams_addr = frm_buf->dyparams_dma_addr;
 			vsi->dynamicparams_size = sizeof(struct inputqueue_dynamic_info);
 			vsi->dynamicparams_offset = frm_buf->dyparams_offset;

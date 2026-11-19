@@ -281,12 +281,6 @@ enum vdec_low_power_state {
 	VDEC_LPW_RESET,
 };
 
-enum venc_lock {
-	VENC_LOCK_NONE,
-	VENC_LOCK_NORMAL,
-	VENC_LOCK_SEC
-};
-
 enum vdec_power_type {
 	VDEC_POWER_NORMAL = 0,
 	VDEC_POWER_RELEASE,
@@ -409,8 +403,12 @@ struct mtk_enc_params {
 	unsigned int    tsvc;
 	unsigned int    nonrefpfreq;
 	int             highquality;
-	int             max_qp;
-	int             min_qp;
+	int             i_max_qp;
+	int             i_min_qp;
+	int             p_max_qp;
+	int             p_min_qp;
+	int             b_max_qp;
+	int             b_min_qp;
 	int             framelvl_qp;
 	int             ip_qpdelta;
 	unsigned int	qp_control_mode;
@@ -509,8 +507,12 @@ struct venc_enc_param {
 	unsigned int tsvc;
 	unsigned int nonrefpfreq;
 	int highquality;
-	unsigned int max_qp;
-	unsigned int min_qp;
+	int i_max_qp;
+	int i_min_qp;
+	int p_max_qp;
+	int p_min_qp;
+	int b_max_qp;
+	int b_min_qp;
 	unsigned int framelvl_qp;
 	unsigned int qp_control_mode;
 	unsigned int ip_qpdelta;
@@ -576,7 +578,6 @@ struct venc_frm_buf {
 	unsigned int num_planes;
 	u64 timestamp;
 	bool has_meta;
-	struct dma_buf *meta_dma;
 	struct dma_buf_attachment *buf_att;
 	struct sg_table *sgt;
 	dma_addr_t meta_addr;
@@ -594,7 +595,6 @@ struct venc_frm_buf {
 	struct dma_buf *metabuffer_dma;
 	dma_addr_t metabuffer_addr;
 	dma_addr_t dyparams_dma_addr;
-	struct dma_buf *dyparams_dma;
 	unsigned int dyparams_offset;
 	bool has_adab;
 	struct dma_buf *adab_dma;
@@ -656,7 +656,7 @@ struct vcodec_work {
 	struct mtk_vcodec_ctx *ctx;
 	enum vcodec_work_type type;
 	struct completion done;
-	bool is_working;
+	bool has_queued;
 };
 
 /**
@@ -763,6 +763,7 @@ struct mtk_vcodec_ctx {
 	struct vcodec_work init_node;
 	struct vcodec_work start_node;
 	struct vcodec_work worker_node;
+	struct work_struct q_run_work;
 	struct vdec_pic_info last_decoded_picinfo;
 	struct mtk_video_dec_buf *dec_flush_buf;
 	struct mtk_video_enc_buf *enc_flush_buf;
@@ -798,14 +799,11 @@ struct mtk_vcodec_ctx {
 	u64 lpw_ts_diff;
 
 	struct work_struct vdec_set_frame_work;
-	bool vdec_set_frame_waiting;
-	struct mutex vdec_set_frame_lock;
 
 	/* for user lock HW case release check */
 	struct mutex hw_status;
 	enum vdec_power_type power_type[MTK_VDEC_HW_NUM];
 	int hw_locked[MTK_VDEC_HW_NUM];
-	int core_locked[MTK_VENC_HW_NUM];
 	int async_mode;
 	int oal_vcodec;
 
@@ -819,6 +817,7 @@ struct mtk_vcodec_ctx {
 	int last_decoded_frame_cnt; // used for timer to check active state of decoded ctx
 	int op_rate_adaptive; // current using adaptive op rate
 	int last_monitor_op; // current monitored op rate
+	int filtered_monitor_op; // filtered monitored op rate
 	unsigned int vgo_op_rate;
 	unsigned int last_vgo_op_rate;
 	unsigned int hw_proc_time[MTK_VDEC_HW_NUM];
@@ -956,7 +955,9 @@ struct mtk_vcodec_dev {
 	atomic_t larb_ref_cnt;
 	atomic_t smi_dump_ref_cnt;
 	atomic_t smi_ctrl_get_ref_cnt[MTK_VCODEC_HW_NUM]; // for get_if_in_use
+	unsigned int pw_cnt[MTK_VCODEC_HW_NUM];
 	unsigned int dec_ao_pw_cnt;
+	struct mutex pw_mutex;
 
 	int id_counter;
 
@@ -979,7 +980,6 @@ struct mtk_vcodec_dev {
 	int enc_lt_irq;
 
 	struct semaphore dec_sem[MTK_VDEC_HW_NUM];
-	struct semaphore enc_sem[MTK_VENC_HW_NUM];
 	atomic_t dec_hw_active[MTK_VDEC_HW_NUM];
 
 	struct mutex dec_dvfs_mutex;
@@ -991,6 +991,10 @@ struct mtk_vcodec_dev {
 	int cpu_hint_mode;
 	unsigned int cgrp_ref_cnt;
 	int thermal_hint_mode;
+	int grp_awr_min_op_margin0;
+	int grp_awr_min_op_margin1;
+	int grp_awr_thr0;
+	int grp_awr_thr1;
 
 	struct mtk_vcodec_pm pm;
 	struct notifier_block pm_notifier;
@@ -1025,6 +1029,7 @@ struct mtk_vcodec_dev {
 	struct workqueue_struct *vdec_buf_wq;
 	struct work_struct vdec_buf_work;
 	struct workqueue_struct *vdec_set_frame_wq;
+	struct workqueue_struct *vdec_q_work_wq;
 
 	int vdec_op_rate_cnt;
 	//int venc_op_rate_cnt;
@@ -1084,7 +1089,6 @@ struct mtk_vcodec_dev {
 
 	struct device *smmu_dev;
 	unsigned int iommu_domain_swtich;
-	enum venc_lock enc_hw_locked[MTK_VENC_HW_NUM];
 	unsigned int svp_mtee;
 	unsigned int unique_domain;
 };

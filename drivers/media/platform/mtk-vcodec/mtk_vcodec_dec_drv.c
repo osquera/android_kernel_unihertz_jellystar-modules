@@ -45,6 +45,8 @@ module_param(mtk_vcodec_dvfs_qos_log_en, bool, 0644);
 module_param(mtk_vcodec_vcp, int, 0644);
 char mtk_vdec_property_prev[LOG_PROPERTY_SIZE];
 char mtk_vdec_vcp_log_prev[LOG_PROPERTY_SIZE];
+module_param(mtk_vdec_work_debug_level, int, 0644);
+module_param(mtk_vdec_work_infos_level, int, 0644);
 module_param(mtk_vdec_lpw_limit, int, 0644);
 module_param(mtk_vdec_lpw_timeout, int, 0644);
 module_param(mtk_vdec_lpw_start, int, 0644);
@@ -94,12 +96,12 @@ static int fops_vcodec_open(struct file *file)
 
 	vcodec_trace_begin_func();
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	ctx = kvzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx) {
 		ret = -ENOMEM;
 		goto err_alloc_ctx;
 	}
-	mtk_buf = kzalloc(sizeof(*mtk_buf), GFP_KERNEL);
+	mtk_buf = kvzalloc(sizeof(*mtk_buf), GFP_KERNEL);
 	if (!mtk_buf) {
 		ret = -ENOMEM;
 		goto err_alloc_mtk_buf;
@@ -266,9 +268,9 @@ err_ctrls_setup:
 #if IS_ENABLED(CONFIG_MTK_TINYSYS_VCP_SUPPORT)
 err_before_lock:
 #endif
-	kfree(mtk_buf);
+	kvfree(mtk_buf);
 err_alloc_mtk_buf:
-	kfree(ctx);
+	kvfree(ctx);
 err_alloc_ctx:
 	vcodec_trace_end();
 	return ret;
@@ -317,8 +319,8 @@ static int fops_vcodec_release(struct file *file)
 		timeline_destroy(ctx->p_timeline_obj);
 #endif
 
-	kfree(ctx->dec_flush_buf);
-	kfree(ctx);
+	kvfree(ctx->dec_flush_buf);
+	kvfree(ctx);
 	if (dev->dec_cnt > 0)
 		dev->dec_cnt--;
 	mutex_unlock(&dev->dev_mutex);
