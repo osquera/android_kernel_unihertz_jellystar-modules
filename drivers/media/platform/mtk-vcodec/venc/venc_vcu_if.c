@@ -95,6 +95,14 @@ static int check_codec_id(struct venc_vcu_ipi_msg_common *msg, unsigned int fmt)
 		break;
 	}
 
+	/*
+	 * Jelly Star: the MT6789 codec daemon (v3avpud) numbers encoders from 1 (H264 = 1,
+	 * H265 = 2, HEIF = 3, VP8 = 4, MPEG4 = 5, HYBRID_H264 = 6, H263 = 7), in the order of the
+	 * VENC_* entries; here those follow the decoder entries in enum mtk_codec_type.
+	 */
+	if (codec_id != 0)
+		codec_id -= VENC_H264 - 1;
+
 	if (codec_id == 0) {
 		mtk_v4l2_err("[error] venc unsupported fourcc\n");
 		ret = -1;
