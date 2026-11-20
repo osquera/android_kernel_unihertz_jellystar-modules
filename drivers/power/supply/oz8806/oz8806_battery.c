@@ -74,7 +74,8 @@ static int save_capacity = INIT_CAP;
 int32_t age_soh = -1;
 int32_t cycle_soh = -1;
 #define NAME	"oz8806"
-#define BATT_PHY "bms"
+/* Jelly Star: the stock gauge's power supply name, which the MediaTek battery manager reads. */
+#define BATT_PHY "oz8806"
 
 static enum power_supply_property oz8806_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
@@ -82,13 +83,9 @@ static enum power_supply_property oz8806_battery_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
-	POWER_SUPPLY_PROP_TECHNOLOGY,
-	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_CHARGE_NOW,
-	POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN,
-	POWER_SUPPLY_PROP_ENERGY_NOW,
 	//POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW,
 	//POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG,
 	//POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
@@ -786,11 +783,45 @@ static void oz8806_wakeup_event(struct oz8806_data *data)
 		ws_active = 1;
 	}
 }
+/*
+ * Jelly Star: the gauge algorithm (calculate.c, from Samsung's tree) saves the discharge total and
+ * the cycle count in the SD77428 gauge it was written for. The OZ8806 has no place for them, and the
+ * same algorithm version as BMT ships it for the OZ8806 (Motorola's calculate.o) doesn't save them.
+ */
+int32_t afe_write_cycleCount(uint32_t dat)
+{
+	return 0;
+}
+
+int32_t afe_write_accmulate_dsg_data(uint32_t dat)
+{
+	return 0;
+}
+
+#ifdef JELLYSTAR_CHARGER_STATE
+/*
+ * Jelly Star: MediaTek's charger framework (mtk_charger) reports the charger state here, as with
+ * the stock gauge: g_is_charger_on and the power supply type of the charger in g_charger_type.
+ */
+int g_is_charger_on;
+EXPORT_SYMBOL(g_is_charger_on);
+int g_charger_type;
+EXPORT_SYMBOL(g_charger_type);
+#endif
+
 //this is very important code customer need change
 //customer should change charge discharge status according to your system
 static void system_charge_discharge_status(struct oz8806_data *data)
 {
 	int8_t adapter_status_temp = O2_CHARGER_BATTERY;
+#ifdef JELLYSTAR_CHARGER_STATE
+	if (g_is_charger_on)
+		adapter_status_temp = (g_charger_type == POWER_SUPPLY_TYPE_USB) ?
+			O2_CHARGER_USB : O2_CHARGER_AC;
+	batt_dbg("g_is_charger_on=%d, g_charger_type=%d\n", g_is_charger_on, g_charger_type);
+	adapter_status = adapter_status_temp;
+	return;
+#endif
 
 	union power_supply_propval val_ac = {0};
 	union power_supply_propval val_usb = {0};
@@ -1427,8 +1458,8 @@ EXPORT_SYMBOL(oz8806_get_system_boot_time);
 unsigned long oz8806_get_boot_up_time(void)
 {
 	unsigned long long t;
-	struct timespec time;
-	ktime_get_ts(&time);
+	struct timespec64 time;
+	ktime_get_ts64(&time);
 	t = time.tv_sec * 1000 + time.tv_nsec / 1000000;
 	bmt_dbg("boot up time: %lu ms\n", (unsigned long) t);
 
@@ -1448,7 +1479,7 @@ unsigned long oz8806_get_power_on_time(void)
 }
 EXPORT_SYMBOL(oz8806_get_power_on_time);
 
-static int oz8806_probe(struct i2c_client *client,const struct i2c_device_id *id)
+static int oz8806_probe(struct i2c_client *client)
 {
 	int32_t ret = 0;
 	struct oz8806_data* data = NULL;
@@ -1511,7 +1542,9 @@ static int oz8806_probe(struct i2c_client *client,const struct i2c_device_id *id
 	oz8806_powersupply_init(data);
 	psy_cfg.drv_data = data,
 	data->bat = power_supply_register(&client->dev, &the_oz8806->bat_desc,&psy_cfg);
-	if (!data->bat) {
+	if (IS_ERR_OR_NULL(data->bat)) {
+		ret = data->bat ? PTR_ERR(data->bat) : -ENOMEM;
+		data->bat = NULL;
 		bmt_dbg("failed to register power_supply battery\n");
 		goto register_fail;
 	}
@@ -1547,7 +1580,7 @@ register_fail:
 }
 
 
-static int oz8806_remove(struct i2c_client *client)
+static void oz8806_remove(struct i2c_client *client)
 {
 	struct oz8806_data *data = i2c_get_clientdata(client);
 
@@ -1575,8 +1608,6 @@ static int oz8806_remove(struct i2c_client *client)
 #ifndef CONFIG_OZ8806_M
 	bmulib_exit();
 #endif
-
-	return 0;
 }
 
 static void oz8806_shutdown(struct i2c_client *client)
@@ -1613,6 +1644,7 @@ MODULE_DEVICE_TABLE(i2c, oz8806_id);
 
 static const struct of_device_id oz8806_of_match[] = {
 	{.compatible = "o2micro,oz8806",},
+	{.compatible = "mediatek,coulomb",},	/* Jelly Star: the stock gauge's DT node */
 	{},
 };
 MODULE_DEVICE_TABLE(of, oz8806_of_match);

@@ -162,6 +162,7 @@ typedef struct tag_bmu {
 	int32_t	fRCPrev;
 	int32_t	sCaMAH;			//= 0;						//adjusted residual capacity
 	int32_t	i2c_error_times;
+	uint32_t	dsg_data;	/* Jelly Star: read by calculate.c; not stored on the OZ8806 */
 }bmu_data_t;
 
 typedef struct tag_gas_gauge {
@@ -339,6 +340,9 @@ extern uint32_t calculate_version;
 extern int32_t age_soh;
 extern int32_t cycle_soh;
 extern uint32_t accmulate_dsg_data;
+/* Jelly Star: used by calculate.c (see oz8806_battery.c) */
+extern int32_t afe_write_cycleCount(uint32_t dat);
+extern int32_t afe_write_accmulate_dsg_data(uint32_t dat);
 
 #define X_AXIS gas_gauge->rc_x_num
 #define Y_AXIS gas_gauge->rc_y_num

@@ -1,0 +1,35 @@
+# Jelly Star: O2Micro/BMT OZ8806 fuel gauge, built as the stock module fauge, with the Jelly Star
+# battery data (table.c, parameter.c, battery_config.h). JELLYSTAR_CHARGER_STATE: the charger state
+# comes from MediaTek's charger framework through g_is_charger_on/g_charger_type, as on stock.
+load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "*.c",
+        "*.h",
+    ]),
+)
+
+define_mgk_ddk_ko(
+    name = "fauge",
+    srcs = glob([
+        "*.h",
+    ]) + [
+        "bmulib.c",
+        "calculate.c",
+        "oz8806_battery.c",
+        "parameter.c",
+        "table.c",
+    ],
+    includes = ["."],
+    local_defines = [
+        "JELLYSTAR_CHARGER_STATE",
+    ],
+)
