@@ -383,6 +383,7 @@ mgk_64_kleaf_device_modules_srcs = [
     "//kernel_device_modules-{}/sound/soc/codecs/frsm_i2cd:srcs".format(kernel_version),
     "//kernel_device_modules-{}/sound/soc/codecs/fsm:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/input/touchscreen/chsc5xxx:srcs".format(kernel_version),
+    "//kernel_device_modules-{}/drivers/input/fingerprint/sunwave:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcodec:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/media/platform/mtk-vcu:srcs".format(kernel_version),
     "//kernel_device_modules-{}/drivers/misc/mediatek/adsp:srcs".format(kernel_version),
@@ -4926,6 +4927,7 @@ def get_overlay_modules_list():
         "//kernel_device_modules-{}/sound/soc/codecs/frsm_i2cd:snd-soc-fs19xx".format(kernel_version),
         "//kernel_device_modules-{}/sound/soc/codecs/fsm:snd-soc-fsm".format(kernel_version),
         "//kernel_device_modules-{}/drivers/input/touchscreen/chsc5xxx:chsc5xxx_touch".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/input/fingerprint/sunwave:sunwave_fp".format(kernel_version),
     ])
 
 

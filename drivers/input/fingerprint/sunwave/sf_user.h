@@ -6,17 +6,23 @@
 //-----------------------------------------------------------------------------
 
 // platform select
-#define SF_PLATFORM_SEL             SF_TEE_TRUSTY
+#define SF_PLATFORM_SEL             SF_TEE_TRUSTKERNEL
 // compatible select
-#define SF_COMPATIBLE_SEL           SF_COMPATIBLE_TRUSTY
+#define SF_COMPATIBLE_SEL           SF_COMPATIBLE_TRUSTKERNEL
 // power mode select
-#define SF_POWER_MODE_SEL           PWR_MODE_NOF
+#define SF_POWER_MODE_SEL           PWR_MODE_GPIO
 // debug log select
 #define SF_LOG_ENABLE               1
+
+/*
+ * Jelly Star: MediaTek's SPI driver (spi-mt65xx) is a vendor module, so CONFIG_SPI_MT65XX isn't in
+ * the kernel config; it provides mt_spi_{en,dis}able_master_clk() and the TrustKernel SPI layout.
+ */
+#define SF_SPI_MT65XX               1
 //-----------------------------------------------------------------------------
 
 /* Dts node. */
-#define COMPATIBLE_SW_FP            "sprocomm,finger"
+#define COMPATIBLE_SW_FP            "mediatek,fingerprint"
 
 // for not mediatek
 #define COMPATIBLE_RESET_GPIO       "fpreset-gpio"
@@ -26,9 +32,9 @@
 //for mediatek pinctl system
 #define FINGER_POWER_ON             "finger_power_high"
 #define FINGER_POWER_OFF            "finger_power_low"
-#define FINGER_RESET_LOW            "finger_rst_clr"
-#define FINGER_RESET_HIGH           "finger_rst_set"
-#define FINGER_INT_SET              "eint"
+#define FINGER_RESET_LOW            "finger_rst_low"
+#define FINGER_RESET_HIGH           "finger_rst_high"
+#define FINGER_INT_SET              "eint_as_int"
 // spi dts config enable
 #define SF_SPI_DTS_CS               0
 #define SF_SPI_DTS_Ck               0

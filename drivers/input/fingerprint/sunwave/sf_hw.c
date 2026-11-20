@@ -379,7 +379,8 @@ static int sf_ctl_device_init_gpio_pins(struct sf_ctl_device *ctl_dev)
 #if SF_MTK_CPU
     sf_pinctrl = pinctrl_get(&ctl_dev->pdev->dev);
 
-    if (!sf_pinctrl) {
+    if (IS_ERR_OR_NULL(sf_pinctrl)) {
+        sf_pinctrl = NULL;
         xprintk(KERN_ERR, "pinctrl_get(..) failed.\n");
         return (-ENODEV);
     }
@@ -393,7 +394,8 @@ static int sf_ctl_device_init_gpio_pins(struct sf_ctl_device *ctl_dev)
             sf_pin_states[i] = pinctrl_lookup_state(sf_pinctrl,
                                                     sf_pinctrl_state_names[i]);
 
-            if (!sf_pin_states[i]) {
+            if (IS_ERR_OR_NULL(sf_pin_states[i])) {
+                sf_pin_states[i] = NULL;
                 xprintk(KERN_ERR, "can't find '%s' pinctrl_state.\n",
                         sf_pinctrl_state_names[i]);
                 err = (-ENODEV);

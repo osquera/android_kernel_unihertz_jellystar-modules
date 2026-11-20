@@ -113,7 +113,7 @@ struct sf_ctl_device {
     int  (*spi_clk_on)(bool on);
     int  (*reset)     (void);
 #ifdef CONFIG_PM_WAKELOCKS
-    struct wakeup_source wakelock;
+    struct wakeup_source *wakelock;
 #else
     struct wake_lock wakelock;
 #endif

@@ -1,0 +1,43 @@
+# Jelly Star: Sunwave fingerprint device control driver, built as the stock module sunwave_fp.
+# TrustKernel mode: the chip ID is read through the TEE (tkcore's tee_spi_transfer), and the SPI
+# clock comes from MediaTek's spi-mt65xx. SF_NO_FB_NOTIFIER: stock doesn't register an fb
+# notifier (screen state comes in through the set_fun sysfs file). SF_NO_FINGER_PROPERTIES: leave
+# out Realme's /sys/finger_properties node.
+load("//build/bazel_mgk_rules:mgk_ddk_ko.bzl", "define_mgk_ddk_ko")
+load("@mgk_info//:kernel_version.bzl", "kernel_version")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "*.c",
+        "*.h",
+    ]),
+)
+
+define_mgk_ddk_ko(
+    name = "sunwave_fp",
+    srcs = glob([
+        "*.h",
+    ]) + [
+        "sf_ctl.c",
+        "sf_hw.c",
+    ],
+    includes = ["."],
+    local_defines = [
+        "SF_NO_FB_NOTIFIER",
+        "SF_NO_FINGER_PROPERTIES",
+    ],
+    header_deps = [
+        "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore_public_hdrs".format(kernel_version),
+    ],
+    ko_deps = [
+        "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/spi:spi-mt65xx".format(kernel_version),
+    ],
+)

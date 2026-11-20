@@ -74,7 +74,9 @@ static int sf_read_sensor_id(void);
 extern int sf_platform_init(struct sf_ctl_device *ctl_dev);
 extern void sf_platform_exit(struct sf_ctl_device *ctl_dev);
 
+#ifndef SF_NO_FB_NOTIFIER
 extern int fb_blank(struct fb_info *info, int blank);
+#endif
 
 //---------------------------------------------------------------------------------
 
@@ -142,12 +144,20 @@ static struct mt_chip_conf smt_conf = {
 
 static int sf_remove(sf_device_t *pdev);
 static int sf_probe(sf_device_t *pdev);
+#if (SF_SPI_RW_EN && LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0))
+static void sf_remove_void(sf_device_t *pdev)
+{
+    sf_remove(pdev);
+}
+#endif
 
 #if SF_SPI_RW_EN
 static struct of_device_id  sf_of_match[] = {
     { .compatible = COMPATIBLE_SW_FP, },
+    {},
 };
 
+#if SF_REG_DEVICE_BY_DRIVER
 static struct spi_board_info spi_board_devs[] __initdata = {
     [0] = {
         .modalias = "sunwave-fp",
@@ -156,6 +166,7 @@ static struct spi_board_info spi_board_devs[] __initdata = {
         .mode = SPI_MODE_0,
     },
 };
+#endif
 
 static int sf_ctl_spi_speed(unsigned int speed)
 {
@@ -214,7 +225,11 @@ static sf_driver_t sf_driver = {
 #endif
     },
     .probe  = sf_probe,
+#if (SF_SPI_RW_EN && LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0))
+    .remove = sf_remove_void,
+#else
     .remove = sf_remove,
+#endif
 };
 
 static sf_version_info_t sf_hw_ver;
@@ -248,7 +263,7 @@ static irqreturn_t sf_ctl_device_irq(int irq, void *dev_id)
     xprintk(SF_LOG_LEVEL, "%s(irq = %d, ..) toggled.\n", __FUNCTION__, irq);
     schedule_work(&sf_ctl_dev.work_queue);
 #ifdef CONFIG_PM_WAKELOCKS
-    __pm_wakeup_event(&sf_ctl_dev.wakelock, msecs_to_jiffies(5000));
+    __pm_wakeup_event(sf_ctl_dev.wakelock, msecs_to_jiffies(5000));
 #else
     wake_lock_timeout(&sf_ctl_dev.wakelock, msecs_to_jiffies(5000));
 #endif
@@ -508,7 +523,9 @@ sf_store_set_fun(struct device *d, struct device_attribute *attr,
     int ret;
     ret = sscanf(buf, "%d", &blank);
     xprintk(KERN_INFO, "sf_store_set_fun (..) blank = %d.\n", blank);
+#ifndef SF_NO_FB_NOTIFIER
     fb_blank(NULL, blank);
+#endif
     xprintk(KERN_INFO, "sf_store_set_fun (..) end.\n");
     return count;
 }
@@ -603,7 +620,7 @@ static int sf_adf_event_handler( \
 
 #else
 
-static int sf_fb_notifier_callback(struct notifier_block *self,
+static int __maybe_unused sf_fb_notifier_callback(struct notifier_block *self,
                                    unsigned long event, void *data)
 {
     struct fb_event *evdata = data;
@@ -643,7 +660,7 @@ static int sf_remove(sf_device_t *spi)
 #elif defined(CONFIG_ADF_SPRD)
         // TODO: is it name adf_unregister_client? Unverified it.
         adf_unregister_client(&sf_ctl_dev.adf_event_block);
-#else
+#elif !defined(SF_NO_FB_NOTIFIER)
         fb_unregister_client(&sf_ctl_dev.notifier);
 #endif
 
@@ -658,7 +675,7 @@ static int sf_remove(sf_device_t *spi)
 
         misc_deregister(&sf_ctl_dev.miscdev);
 #ifdef CONFIG_PM_WAKELOCKS
-        wakeup_source_trash(&sf_ctl_dev.wakelock);
+        wakeup_source_unregister(sf_ctl_dev.wakelock);
 #else
         wake_lock_destroy(&sf_ctl_dev.wakelock);
 #endif
@@ -700,7 +717,7 @@ static struct attribute_group finger_properties_attr_group = {
 	.attrs = finger_properties_attrs,
 };
 
-static void create_system_snod(void)
+static void __maybe_unused create_system_snod(void)
 {
 	int ret = 0;
 	struct kobject *properties_kobj;
@@ -742,7 +759,7 @@ static int sf_probe(sf_device_t *dev)
     }
 
 #ifdef CONFIG_PM_WAKELOCKS
-    wakeup_source_init(&sf_ctl_dev.wakelock , "sf_wakelock");
+    sf_ctl_dev.wakelock = wakeup_source_register(NULL, "sf_wakelock");
 #else
     wake_lock_init(&sf_ctl_dev.wakelock, WAKE_LOCK_SUSPEND, "sf_wakelock");
 #endif
@@ -822,7 +839,9 @@ static int sf_probe(sf_device_t *dev)
     }
 #endif
 	is_connect = 1;
+#ifndef SF_NO_FINGER_PROPERTIES
 	create_system_snod();
+#endif
 
     /* Initialize the input subsystem. */
     err = sf_ctl_init_input();
@@ -882,7 +901,7 @@ static int sf_probe(sf_device_t *dev)
         xprintk(KERN_ERR, "register adf notifier succeed");
     }
 
-#else
+#elif !defined(SF_NO_FB_NOTIFIER)
     sf_ctl_dev.notifier.notifier_call = sf_fb_notifier_callback;
     fb_register_client(&sf_ctl_dev.notifier);
 #endif
@@ -1025,7 +1044,7 @@ static int sf_read_sensor_id(void)
     char readbuf[16]  = {0};
     char writebuf[16] = {0};
     int cfg_len = 0;
-	int retry_8201;
+	int retry_8201 __maybe_unused = 0;
     //默认速度设置为1M, 不然8201/8211系列有可能读不到ID
 #if (defined(CONFIG_MTK_SPI) || SF_TRUSTKERNEL_COMPAT_SPI_MT65XX)
     smt_conf.high_time = SF_DEFAULT_SPI_HIGH_TIME;
@@ -1203,8 +1222,10 @@ static int sf_ctl_init_irq(void)
 #endif
     xprintk(SF_LOG_LEVEL, "%s(..) enter.\n", __FUNCTION__);
     /* Register interrupt callback. */
+    /* Jelly Star: same dev_id as free_irq() in sf_remove(), which passed NULL here and
+     * left the handler installed after the module was unloaded. */
     err = request_irq(sf_ctl_dev.irq_num, sf_ctl_device_irq,
-                      flags, "sf-irq", NULL);
+                      flags, "sf-irq", (void *)&sf_ctl_dev);
 
     if (err) {
         xprintk(KERN_ERR, "request_irq(..) = %d.\n", err);
@@ -1267,7 +1288,9 @@ static int __init sf_ctl_driver_init(void)
 #endif
 #if SF_SPI_RW_EN
     /**register SPI device、driver***/
+#if SF_REG_DEVICE_BY_DRIVER
     spi_register_board_info(spi_board_devs, ARRAY_SIZE(spi_board_devs));
+#endif
     err = spi_register_driver(&sf_driver);
 
     if (err < 0) {
