@@ -17,7 +17,13 @@ struct CAM_MEM_DEV_ION_NODE_STRUCT {
 	unsigned long long dma_pa;
 	char               username[64];
 	bool               need_sec_handle;
-	unsigned int       sec_handle;
+	/*
+	 * Jelly Star: the stock camera HAL uses this 104-byte layout (CAM_MEM_ION_MAP_PA is
+	 * _IOWR('I', 0, 104)): a 64-bit secure handle followed by its secure address. With the
+	 * 88-byte one (32-bit sec_handle, no sec_pa) its ioctls don't match and the preview stays black.
+	 */
+	unsigned long long sec_handle;
+	unsigned long long sec_pa;
 };
 
 enum CAM_MEM_CMD_ENUM {
