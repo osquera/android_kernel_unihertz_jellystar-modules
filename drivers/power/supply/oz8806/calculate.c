@@ -23,7 +23,7 @@
 uint32_t calculate_version = 0x20210824;
 
 uint16_t _b8207028918cf67b818b933cec55307f = 1;
-uint16_t _9fdd6f346013b8418267169afad72f39 = 1;
+uint16_t _9fdd6f346013b8418267169afad72f39 = 10; /* Jelly Star: the stock fauge value */
 uint16_t _5e42b9ba1b3fed25687bccaa5c7b0721 = 5;
 uint16_t _c577340b7519f6dbfbaef3050b811bfc = 9; 
 uint16_t _f3e83602c93d1a9ad346ade68b5191ab = 15;

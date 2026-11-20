@@ -18,19 +18,24 @@
 #ifndef	__O2_BATTERY_CONFIG_H
 #define	__O2_BATTERY_CONFIG_H __FILE__
 
+/*
+ * Jelly Star: the values below (CV, capacity, Rsense, end of charge/discharge, board offset,
+ * NTC pull-up and reference voltage) are those of the stock fauge module's config_data.
+ */
+
 
 #define OZ88106_I2C_NUM    2
 //#define	EXT_THERMAL_READ
 
-#define OZ8806_VOLTAGE  		4350
-#define O2_CONFIG_CAPACITY  		5000
+#define OZ8806_VOLTAGE  		4400
+#define O2_CONFIG_CAPACITY  		2040
 #define O2_CONFIG_RSENSE  		10000//Expanded 1000 times
-#define O2_CONFIG_EOC  		200
+#define O2_CONFIG_EOC  		300
 #define OZ8806_EOD 			3400
-#define O2_CONFIG_BOARD_OFFSET	12
+#define O2_CONFIG_BOARD_OFFSET	22
 #define O2_SOC_START_THRESHOLD_VOL	3700
 #define O2_CONFIG_RECHARGE		100
-#define O2_TEMP_PULL_UP_R		100000 //100K
+#define O2_TEMP_PULL_UP_R		24000 //24K
 #define O2_TEMP_REF_VOLTAGE		1800 //mv
 #define BATTERY_WORK_INTERVAL		10
 
