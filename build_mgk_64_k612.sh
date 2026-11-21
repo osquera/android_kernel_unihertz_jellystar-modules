@@ -44,9 +44,15 @@ find "${SRC}" -path "*${TARGET_DEVICE}_kernel_aarch64.user*" -name '*.ko' \
 find "${SRC}" -path "*${TARGET_DEVICE}_kernel_aarch64.user*" -name 'Image*' \
     -exec cp -t "${FINAL_DIST}/" {} +
 find "${SRC}" -maxdepth 3 -name 'kernel-uapi-headers.tar.gz' -exec cp -t "${FINAL_DIST}/" {} + || true
-# Modules the GKI build adds for this target (cfg80211, mac80211, reboot-mode, ...) and DTBs, if any.
+# Modules the GKI build adds for this target (cfg80211, mac80211, reboot-mode, ...)
 find "${SRC}/${TARGET_DEVICE}.user/" -name '*.ko' -exec cp -n -t "${FINAL_DIST}/" {} +
+
+# Device tree: the MT6789 base DTB and the board overlay image
 find "${SRC}/${TARGET_DEVICE}.user/" -maxdepth 1 -name '*.dtb' -exec cp -t "${FINAL_DIST}/" {} +
+dtbo_img="${SRC}/${TARGET_DEVICE}_kernel_images.user_dtbo/dtbo.img"
+if [ -f "${dtbo_img}" ]; then
+    cp -a "${dtbo_img}" "${FINAL_DIST}/"
+fi
 
 echo "Kernel artifacts in ${FINAL_DIST}"
 ls "${FINAL_DIST}" | sed 's/\.ko$//' | wc -l

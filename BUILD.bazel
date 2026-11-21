@@ -110,4 +110,6 @@ define_mgk(
     symbol_list = mgk_kmi_symbol_list,
     additional_symbol_lists = mgk_additional_kmi_symbol_lists,
     KMI_white_list = KMI_white_list,
+    dtb_files = ["mt6789.dtb", "mt6789-jellystar-overlay.dtbo"],
+    build_dtbo_image = True,
 )
