@@ -1663,6 +1663,26 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
             LOG_INF("SENSOR_SET_SENSOR_IHDR LE=%d, SE=%d, Gain=%d\n",(UINT16)*feature_data,(UINT16)*(feature_data+1),(UINT16)*(feature_data+2));
             ihdr_write_shutter_gain((UINT16)*feature_data,(UINT16)*(feature_data+1),(UINT16)*(feature_data+2));
 			break;
+		/*
+		 * Without a gain range the HAL never sends SET_GAIN and makes up the brightness
+		 * with ISP gain. Analog gain: 1x up to the top of the gain table (683 = 10.67x).
+		 */
+		case SENSOR_FEATURE_GET_GAIN_RANGE_BY_SCENARIO:
+			*(feature_data + 1) = BASEGAIN;
+			*(feature_data + 2) = IMX219MIPI_sensorGainMapping[IMX219MIPI_MaxGainIndex - 1][0];
+			break;
+		case SENSOR_FEATURE_GET_BASE_GAIN_ISO_AND_STEP:
+			*(feature_data + 0) = 100;
+			*(feature_data + 1) = 1;
+			*(feature_data + 2) = 0;
+			break;
+		case SENSOR_FEATURE_GET_MIN_SHUTTER_BY_SCENARIO:
+			*(feature_data + 1) = imgsensor_info.min_shutter;
+			break;
+		/* The HAL only sends AWB gains (SET_AWB_GAIN) for scenarios that ask for them */
+		case SENSOR_FEATURE_GET_AWB_REQ_BY_SCENARIO:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = 1;
+			break;
 		case SENSOR_FEATURE_SET_AWB_GAIN:
 			imx219_set_awb_gain((struct SET_SENSOR_AWB_GAIN *)feature_para);
 			break;
