@@ -623,12 +623,12 @@ static kal_uint16 set_gain(kal_uint16 gain)
 {
 	kal_uint16 reg_gain;
 
-	if (gain < BASEGAIN || gain > 32 * BASEGAIN) {
+	if (gain < BASEGAIN || gain > 16 * BASEGAIN) {
 		LGE_DEBUG("Error gain setting");
 		if (gain < BASEGAIN)
 			gain = BASEGAIN;
-		else if (gain > 32 * BASEGAIN)
-			gain = 32 * BASEGAIN;
+		else if (gain > 16 * BASEGAIN)
+			gain = 16 * BASEGAIN;
 	}
 
     reg_gain = gain2reg(gain);
@@ -4234,6 +4234,19 @@ static kal_uint32 feature_control( MSDK_SENSOR_FEATURE_ENUM feature_id,
 				imgsensor_info.pre.mipi_pixel_rate;
 			break;
 		}
+		break;
+	/* Jelly Star: gain range and ISO base as the stock driver reports them (1x-16x) */
+	case SENSOR_FEATURE_GET_GAIN_RANGE_BY_SCENARIO:
+		*(feature_data + 1) = BASEGAIN;
+		*(feature_data + 2) = 16 * BASEGAIN;
+		break;
+	case SENSOR_FEATURE_GET_BASE_GAIN_ISO_AND_STEP:
+		*(feature_data + 0) = 100;
+		*(feature_data + 1) = 1;
+		*(feature_data + 2) = 0;
+		break;
+	case SENSOR_FEATURE_GET_MIN_SHUTTER_BY_SCENARIO:
+		*(feature_data + 1) = imgsensor_info.min_shutter;
 		break;
 	/* Jelly Star: per-scenario timing queries of the current MediaTek HAL */
 	case SENSOR_FEATURE_GET_PERIOD_BY_SCENARIO:

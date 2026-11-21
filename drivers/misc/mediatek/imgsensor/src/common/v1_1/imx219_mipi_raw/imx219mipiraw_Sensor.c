@@ -69,8 +69,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,				//record different mode's pclk
 		.linelength = 0xD78,				//record different mode's linelength
 		.framelength = 0x687,			//record different mode's framelength
-		.startx = 2,					//record different mode's startx of grabwindow
-		.starty = 2,					//record different mode's starty of grabwindow
+		.startx = 0,					//record different mode's startx of grabwindow
+		.starty = 0,					//record different mode's starty of grabwindow
 		.grabwindow_width = 1632,		//record different mode's width of grabwindow
 		.grabwindow_height = 1224,		//record different mode's height of grabwindow
 		/*	 following for MIPIDataLowPwr2HighSpeedSettleDelayCount by different scenario	*/
@@ -82,8 +82,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x9c8,
-		.startx = 4,
-		.starty = 4,
+		.startx = 0,
+		.starty = 0,
 		.grabwindow_width = 3264,
 		.grabwindow_height = 2448,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -93,8 +93,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x9c8,
-		.startx = 4,
-		.starty = 4,
+		.startx = 0,
+		.starty = 0,
 		.grabwindow_width = 3264,
 		.grabwindow_height = 2448,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -104,8 +104,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,				//record different mode's pclk
 		.linelength = 0xD78,				//record different mode's linelength
 		.framelength = 0x687,			//record different mode's framelength
-		.startx = 2,					//record different mode's startx of grabwindow
-		.starty = 2,					//record different mode's starty of grabwindow
+		.startx = 0,					//record different mode's startx of grabwindow
+		.starty = 0,					//record different mode's starty of grabwindow
 		.grabwindow_width = 1632,		//record different mode's width of grabwindow
 		.grabwindow_height = 1224,		//record different mode's height of grabwindow
 		/*	 following for MIPIDataLowPwr2HighSpeedSettleDelayCount by different scenario	*/
@@ -117,8 +117,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x9c8,
-		.startx = 4,
-		.starty = 4,
+		.startx = 0,
+		.starty = 0,
 		.grabwindow_width = 3264,
 		.grabwindow_height = 2448,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -128,8 +128,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x687,//9F0
-		.startx = 4,
-		.starty = 4,
+		.startx = 0,
+		.starty = 0,
 		.grabwindow_width = 1280,
 		.grabwindow_height = 720,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -181,11 +181,12 @@ static imgsensor_struct imgsensor = {
 
 /* Sensor output window information */
 static struct SENSOR_WINSIZE_INFO_STRUCT imgsensor_winsize_info[5] =
-{{ 3280, 2464,	0, 	0, 3280, 2464, 1640, 1232, 0, 0, 1640, 1232,		2,	2, 1632,  1224}, // Preview 
- { 3280, 2464,	0,	0, 3280, 2464, 3280, 2464, 0, 0, 3280, 2464,	4,	4, 3264, 2448}, // capture 
- { 3280, 2464,	0, 	0, 3280, 2464, 1640, 1232, 0, 0, 1640, 1232,		2,	2, 1632,  1224}, // video (preview setting)
- { 3280, 2464,	0,	0, 3280, 2464, 3280, 2464, 0, 0, 3280, 2464,	4,	4, 3264, 2448}, // high speed video (capture setting)
- { 3280, 2464,	0,  306, 3280, 1852, 1640,  926, 0, 0, 1640,  926,	4,	4, 1280,  720}};// slim video: rows 306-2157 (0x0168-0x016B), binned 2x2
+/* Jelly Star: the sensor outputs exactly the grab window (MT6789's cam mux checks the size) */
+{{ 3280, 2464,	8,	8, 3264, 2448, 1632, 1224, 0, 0, 1632, 1224,	0,	0, 1632, 1224}, // Preview
+ { 3280, 2464,	8,	8, 3264, 2448, 3264, 2448, 0, 0, 3264, 2448,	0,	0, 3264, 2448}, // capture
+ { 3280, 2464,	8,	8, 3264, 2448, 1632, 1224, 0, 0, 1632, 1224,	0,	0, 1632, 1224}, // video (preview setting)
+ { 3280, 2464,	8,	8, 3264, 2448, 3264, 2448, 0, 0, 3264, 2448,	0,	0, 3264, 2448}, // high speed video (capture setting)
+ { 3280, 2464, 360, 512, 2560, 1440, 1280,  720, 0, 0, 1280,  720,	0,	0, 1280,  720}};// slim video
 
 
 #define IMX219MIPI_MaxGainIndex (97)
@@ -658,17 +659,17 @@ static void preview_setting(void)
 	write_cmos_sensor(0x0162,  ((imgsensor_info.pre.linelength >> 8) & 0xFF));
 	write_cmos_sensor(0x0163,  (imgsensor_info.pre.linelength & 0xFF));
 	write_cmos_sensor(0x0164,  0x00);
-	write_cmos_sensor(0x0165,  0x00);
+	write_cmos_sensor(0x0165,  0x08);
 	write_cmos_sensor(0x0166,  0x0C);
-	write_cmos_sensor(0x0167,  0xCF);
+	write_cmos_sensor(0x0167,  0xC7);
 	write_cmos_sensor(0x0168,  0x00);
-	write_cmos_sensor(0x0169,  0x00);
+	write_cmos_sensor(0x0169,  0x08);
 	write_cmos_sensor(0x016A,  0x09);
-	write_cmos_sensor(0x016B,  0x9F);
+	write_cmos_sensor(0x016B,  0x97);
 	write_cmos_sensor(0x016C,  0x06);
-	write_cmos_sensor(0x016D,  0x68);
+	write_cmos_sensor(0x016D,  0x60);
 	write_cmos_sensor(0x016E,  0x04);
-	write_cmos_sensor(0x016F,  0xD0);
+	write_cmos_sensor(0x016F,  0xC8);
 	write_cmos_sensor(0x0170,  0x01);
 	write_cmos_sensor(0x0171,  0x01);
 	write_cmos_sensor(0x0172,  0x03); /* H mirror + V flip, as stock */
@@ -723,17 +724,17 @@ static void capture_setting(kal_uint16 currefps)
 		  write_cmos_sensor(0x0162,   ((imgsensor_info.cap1.linelength >> 8) & 0xFF));
 		  write_cmos_sensor(0x0163,   (imgsensor_info.cap1.linelength & 0xFF));
 		  write_cmos_sensor(0x0164,   0x00);
-		  write_cmos_sensor(0x0165,   0x00);
+		  write_cmos_sensor(0x0165,   0x08);
 		  write_cmos_sensor(0x0166,   0x0C);
-		  write_cmos_sensor(0x0167,   0xCF);
+		  write_cmos_sensor(0x0167,   0xC7);
 		  write_cmos_sensor(0x0168,   0x00);
-		  write_cmos_sensor(0x0169,   0x00);
+		  write_cmos_sensor(0x0169,   0x08);
 		  write_cmos_sensor(0x016A,   0x09);
-		  write_cmos_sensor(0x016B,   0x9F);
+		  write_cmos_sensor(0x016B,   0x97);
 		  write_cmos_sensor(0x016C,   0x0C);
-		  write_cmos_sensor(0x016D,   0xD0);
+		  write_cmos_sensor(0x016D,   0xC0);
 		  write_cmos_sensor(0x016E,   0x09);
-		  write_cmos_sensor(0x016F,   0xA0);
+		  write_cmos_sensor(0x016F,   0x90);
 		  write_cmos_sensor(0x0170,   0x01);
 		  write_cmos_sensor(0x0171,   0x01);
 		  write_cmos_sensor(0x0172,   0x03); /* H mirror + V flip, as stock */
@@ -783,17 +784,17 @@ static void capture_setting(kal_uint16 currefps)
 		  write_cmos_sensor(0x0162,   ((imgsensor_info.cap.linelength >> 8) & 0xFF));
 		  write_cmos_sensor(0x0163,   (imgsensor_info.cap.linelength & 0xFF));
 		  write_cmos_sensor(0x0164,   0x00);
-		  write_cmos_sensor(0x0165,   0x00);
+		  write_cmos_sensor(0x0165,   0x08);
 		  write_cmos_sensor(0x0166,   0x0C);
-		  write_cmos_sensor(0x0167,   0xCF);
+		  write_cmos_sensor(0x0167,   0xC7);
 		  write_cmos_sensor(0x0168,   0x00);
-		  write_cmos_sensor(0x0169,   0x00);
+		  write_cmos_sensor(0x0169,   0x08);
 		  write_cmos_sensor(0x016A,   0x09);
-		  write_cmos_sensor(0x016B,   0x9F);
+		  write_cmos_sensor(0x016B,   0x97);
 		  write_cmos_sensor(0x016C,   0x0C);
-		  write_cmos_sensor(0x016D,   0xD0);
+		  write_cmos_sensor(0x016D,   0xC0);
 		  write_cmos_sensor(0x016E,   0x09);
-		  write_cmos_sensor(0x016F,   0xA0);
+		  write_cmos_sensor(0x016F,   0x90);
 		  write_cmos_sensor(0x0170,   0x01);
 		  write_cmos_sensor(0x0171,   0x01);
 		  write_cmos_sensor(0x0174,   0x00);
@@ -866,18 +867,18 @@ static void slim_video_setting(void)
 	write_cmos_sensor(0x0161,     (imgsensor_info.slim_video.framelength & 0xFF));
 	write_cmos_sensor(0x0162,     ((imgsensor_info.slim_video.linelength >> 8) & 0xFF));
 	write_cmos_sensor(0x0163,     (imgsensor_info.slim_video.linelength & 0xFF));
-	write_cmos_sensor(0x0164,   0x00);
-	write_cmos_sensor(0x0165,   0x00);
-	write_cmos_sensor(0x0166,   0x0C);
-	write_cmos_sensor(0x0167,   0xCF);
-	write_cmos_sensor(0x0168,   0x01);
-	write_cmos_sensor(0x0169,   0x32);
-	write_cmos_sensor(0x016A,   0x08);
-	write_cmos_sensor(0x016B,   0x6D);
-	write_cmos_sensor(0x016C,   0x06);
-	write_cmos_sensor(0x016D,   0x68);
-	write_cmos_sensor(0x016E,   0x03);
-	write_cmos_sensor(0x016F,   0x9E);
+	write_cmos_sensor(0x0164,   0x01);
+	write_cmos_sensor(0x0165,   0x68);
+	write_cmos_sensor(0x0166,   0x0B);
+	write_cmos_sensor(0x0167,   0x67);
+	write_cmos_sensor(0x0168,   0x02);
+	write_cmos_sensor(0x0169,   0x00);
+	write_cmos_sensor(0x016A,   0x07);
+	write_cmos_sensor(0x016B,   0x9F);
+	write_cmos_sensor(0x016C,   0x05);
+	write_cmos_sensor(0x016D,   0x00);
+	write_cmos_sensor(0x016E,   0x02);
+	write_cmos_sensor(0x016F,   0xD0);
 	write_cmos_sensor(0x0170,   0x01);
 	write_cmos_sensor(0x0171,   0x01);
 	write_cmos_sensor(0x0174,   0x01);
