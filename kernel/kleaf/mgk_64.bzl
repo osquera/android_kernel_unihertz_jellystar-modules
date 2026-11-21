@@ -4918,7 +4918,6 @@ def get_overlay_modules_list():
                 d.pop(k)
     # Jelly Star's own modules.
     mgk_64_kleaf_device_modules.extend([
-        "//kernel_device_modules-{}/drivers/misc/mediatek/jellystar:agold_compat".format(kernel_version),
         "//kernel_device_modules-{}/drivers/gpu/drm/panel:panel-unihertz-jellystar-st7701s".format(kernel_version),
         "//kernel_device_modules-{}/drivers/power/supply:rt9471".format(kernel_version),
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore".format(kernel_version),
