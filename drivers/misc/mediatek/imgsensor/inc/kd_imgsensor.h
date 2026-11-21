@@ -426,6 +426,7 @@
 #define OV50DDUAL_SENSOR_ID                     0x565045
 #define OV64B_SENSOR_ID                         0x566442
 #define S5K3P9SP_SENSOR_ID                      0x3109
+#define S5KGM2_SENSOR_ID                        0x08D2
 #define GC8054_SENSOR_ID                        0x8054
 #define GC02M0_SENSOR_ID                        0x02d0
 #define GC02M0_SENSOR_ID1                       0x02d1
@@ -695,6 +696,7 @@
 #define SENSOR_DRVNAME_OV50DDUAL_MIPI_RAW       "ov50ddual_mipi_raw"
 #define SENSOR_DRVNAME_OV64B_MIPI_RAW           "ov64b_mipi_raw"
 #define SENSOR_DRVNAME_S5K3P9SP_MIPI_RAW        "s5k3p9sp_mipi_raw"
+#define SENSOR_DRVNAME_S5KGM2_MIPI_RAW          "s5kgm2_mipi_raw"
 #define SENSOR_DRVNAME_GC8054_MIPI_RAW          "gc8054_mipi_raw"
 #define SENSOR_DRVNAME_GC02M0B_MIPI_MONO        "gc02m0b_mipi_mono"
 #define SENSOR_DRVNAME_GC02M0B_MIPI_MONO1       "gc02m0b_mipi_mono1"

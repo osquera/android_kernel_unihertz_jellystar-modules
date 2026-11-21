@@ -57,9 +57,9 @@
 #define MULTI_WRITE 1
 
 #if MULTI_WRITE
-static const int I2C_BUFFER_LEN = 1020; 
+#define I2C_BUFFER_LEN 1020
 #else
-static const int I2C_BUFFER_LEN = 4;
+#define I2C_BUFFER_LEN 4
 #endif
 
 /**************************** Modify end *****************************/
@@ -69,9 +69,7 @@ static const int I2C_BUFFER_LEN = 4;
 #define LOG_INF(format, args...) pr_debug(PFX "[%s] " format, __func__, ##args)
 #endif
 
-#define LGE_DEBUG(format, args...)   pr_err(PFX "[LGE][%s] " format, __func__, ##args)
-
-extern char rear_sensor_name[20];/*LGE_CHANGE, 2019-11-14, add the camera identifying logic , bk.bae@lge.com*/
+#define LGE_DEBUG(format, args...)   pr_debug(PFX "[%s] " format, __func__, ##args)
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
 //Sensor ID Value: 0x08D2//record sensor id defined in Kd_imgsensor.h
@@ -126,16 +124,17 @@ static struct imgsensor_info_struct imgsensor_info = {
 		.max_framerate = 2400,
 		.mipi_pixel_rate = 723200000,
 	},
+	/* Jelly Star: stock reports 1920x1080 here; the 1080p setting at 30 fps */
 	.slim_video = {
 		.pclk = 646400000,
-		.linelength  = 4224,
-		.framelength = 1272,
+		.linelength  = 2112,
+		.framelength = 10202,
 		.startx= 0,
 		.starty = 0,
-		.grabwindow_width  = 1280,
-		.grabwindow_height = 720,
+		.grabwindow_width  = 1920,
+		.grabwindow_height = 1080,
 		.mipi_data_lp2hs_settle_dc = 85,
-		.max_framerate = 1200,
+		.max_framerate = 300,
 		.mipi_pixel_rate = 723200000,
 	},
 	.custom1 = {//4SUM improve brightness in dark
@@ -195,7 +194,7 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.frame_time_delay_frame = 1,
 	.ihdr_support = 0,
 	.ihdr_le_firstline = 0,
-	.sensor_mode_num = 7,
+	.sensor_mode_num = 5,
 
 #ifdef CONFIG_IMPROVE_CAMERA_PERFORMANCE
 	.cap_delay_frame = 2,
@@ -218,12 +217,11 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.custom2_delay_frame = 3,
 #endif
 
-	.isp_driving_current = ISP_DRIVING_8MA,
+	.isp_driving_current = ISP_DRIVING_6MA,
 	.sensor_interface_type = SENSOR_INTERFACE_TYPE_MIPI,
 	.mipi_sensor_type = MIPI_OPHY_NCSI2,
 	.mipi_settle_delay_mode = 1,
-	//.sensor_output_dataformat = SENSOR_OUTPUT_FORMAT_RAW_Gr,SENSOR_OUTPUT_FORMAT_RAW_4CELL_Gr
-	.sensor_output_dataformat = SENSOR_OUTPUT_FORMAT_RAW_4CELL_Gr,
+	.sensor_output_dataformat = SENSOR_OUTPUT_FORMAT_RAW_Gr,
 	.mclk = 24,
 	.mipi_lane_num = SENSOR_MIPI_4_LANE,
 	.i2c_speed = 1000,
@@ -231,7 +229,7 @@ static struct imgsensor_info_struct imgsensor_info = {
 	/* record sensor support all write id addr,
 	 * only supprt 4 must end with 0xff
 	 */
-	.i2c_addr_table = {0x20, 0x7a, 0xff},//see moudle spec
+	.i2c_addr_table = {0x20, 0x5a, 0x7a, 0xff},//see moudle spec
 };
 
 
@@ -269,7 +267,7 @@ static struct SENSOR_WINSIZE_INFO_STRUCT imgsensor_winsize_info[7] = {
  { 8000, 6000,    0,    0,   8000, 6000, 4000, 3000,   0,   0, 4000, 3000,   0, 0, 4000, 3000},     	/* capture */
  { 8000, 6000,    0,    0,   8000, 6000, 4000, 3000,   0,   0, 4000, 3000,   0, 0, 4000, 3000},     	/* video */
  { 8000, 6000,  160,  840,   7680, 4320, 1920, 1080,   0,   0, 1920, 1080,   0, 0, 1920, 1080},     	/* high speed video */
- { 8000, 6000,  160,  840,   7680, 4320, 1280,  720,   0,   0, 1280,  720,   0, 0, 1280, 720},        	/* slim video */
+ { 8000, 6000,  160,  840,   7680, 4320, 1920, 1080,   0,   0, 1920, 1080,   0, 0, 1920, 1080},     	/* slim video */
  { 8000, 6000,    0,    0, 8000, 6000, 4000, 3000,   0, 0, 4000, 3000,   0, 0, 4000, 3000},
  { 8000, 6000,    0,    0, 8000, 6000, 8000, 6000,   0, 0, 8000, 6000,   0, 0, 8000, 6000},  /* custom2 48M remosaic */
 
@@ -2492,293 +2490,12 @@ static void hs_video_setting(void)
 			sizeof(addr_data_pair_hs_gm2) / sizeof(kal_uint16));
 }
 
-static kal_uint16 addr_data_pair_slim_gm2[] = {
-	0x6214, 0xF9F3, //slim mode 1280x720 120fps
-	0x0344, 0x00A0,
-	0x0346, 0x0348,
-	0x0348, 0x1E9F,
-	0x034A, 0x1427,
-	0x034C, 0x0500,
-	0x034E, 0x02D0,
-	0x0340, 0x04F8,
-	0x0342, 0x1080,
-	0x0900, 0x0124,
-	0x0380, 0x0002,
-	0x0382, 0x0002,
-	0x0384, 0x0002,
-	0x0386, 0x0006,
-	0x0400, 0x1010,
-	0x0402, 0x1818,
-	0x0404, 0x2000,
-	0x0350, 0x0000,
-	0x0352, 0x0000,
-	0x0136, 0x1800,
-	0x013E, 0x0000,
-	0x0300, 0x0005,
-	0x0302, 0x0001,
-	0x0304, 0x0006,
-	0x0306, 0x00CA,
-	0x0308, 0x0008,
-	0x030A, 0x0001,
-	0x030C, 0x0000,
-	0x030E, 0x0003,
-	0x0310, 0x004B,
-	0x0312, 0x0000,
-	0x6028, 0x2000,
-	0x602A, 0x0E36,
-	0x6F12, 0x000A,
-	0x602A, 0x1250,
-	0x6F12, 0x0002,
-	0xF44A, 0x0007,
-	0xF454, 0x0011,
-	0x6028, 0x2000,
-	0x602A, 0x10C0,
-	0x6F12, 0xBFC2,
-	0x6F12, 0xBFC3,
-	0x602A, 0x3B24,
-	0x6F12, 0x0008,
-	0x9C02, 0x0FE0,
-	0x9C04, 0x0FE7,
-	0x6028, 0x2000,
-	0x602A, 0x0E6E,
-	0x6F12, 0xFFFF,
-	0x602A, 0x3632,
-	0x6F12, 0x01E0,
-	0x602A, 0x11B4,
-	0x6F12, 0x0060,
-	0x6028, 0x2000,
-	0x602A, 0x0DD6,
-	0x6F12, 0x000A,
-	0x602A, 0x0DDC,
-	0x6F12, 0x0001,
-	0x602A, 0x1EAC,
-	0x6F12, 0x0096,
-	0x6028, 0x2000,
-	0x602A, 0x33B0,
-	0x6F12, 0x0008,
-	0x602A, 0x33B6,
-	0x6F12, 0x0004,
-	0x602A, 0x33FC,
-	0x6F12, 0x0604,
-	0x602A, 0x33FE,
-	0x6F12, 0x0704,
-	0x602A, 0x3462,
-	0x6F12, 0x7701,
-	0x602A, 0x347C,
-	0x6F12, 0x0000,
-	0x602A, 0x34A6,
-	0x6F12, 0x5555,
-	0x602A, 0x34E4,
-	0x6F12, 0x0000,
-	0x602A, 0x34F2,
-	0x6F12, 0x0001,
-	0x0D00, 0x0000,
-	0x0D02, 0x0001,
-	0x0114, 0x0300,
-	0x6028, 0x2000,
-	0x602A, 0x116E,
-	0x6F12, 0x0000,
-	0x602A, 0x1172,
-	0x6F12, 0x0100,
-	0x602A, 0x6C0E,
-	0x6F12, 0x0210,
-	0x602A, 0x2A10,
-	0x6F12, 0x0100,
-	0x602A, 0x2A80,
-	0x6F12, 0x0200,
-	0x602A, 0x6C0A,
-	0x6F12, 0x0167,
-	0x6F12, 0x00A8,
-	0xB134, 0x0000,
-	0x0BC8, 0x0001,
-	0x6028, 0x2000,
-	0x602A, 0x39AA,
-	0x6F12, 0x0002,
-	0x6F12, 0x0001,
-	0x6F12, 0x0001,
-	0x602A, 0x39BA,
-	0x6F12, 0x0000,
-	0x6F12, 0x0001,
-	0x6F12, 0x0000,
-	0x6F12, 0x0000,
-	0x602A, 0x39C4,
-	0x6F12, 0x0000,
-	0x6028, 0x2000,
-	0x602A, 0x0E26,
-	0x6F12, 0x0440,
-	0x6F12, 0x0440,
-	0x602A, 0x1E7E,
-	0x6F12, 0x0401,
-	0x602A, 0x2450,
-	0x6F12, 0x0005,
-	0x602A, 0x25F8,
-	0x6F12, 0xAAAA,
-	0x602A, 0x34D8,
-	0x6F12, 0x07C0,
-	0x6F12, 0x07C0,
-	0x6028, 0x2000,
-	0x602A, 0x6A98,
-	0x6F12, 0x0000,
-	0x602A, 0x364E,
-	0x6F12, 0xF44A,
-	0x6F12, 0x0007,
-	0x602A, 0x3676,
-	0x6F12, 0x9C02,
-	0x6F12, 0x0FE0,
-	0x602A, 0x367A,
-	0x6F12, 0x9C04,
-	0x6F12, 0x0FE7,
-
-#if 0
-	0x6214, 0xF9F3, // slim 4000x3000
-	0x0344, 0x0000,
-	0x0346, 0x0000,
-	0x0348, 0x1F3F,
-	0x034A, 0x176F,
-	0x034C, 0x0FA0,
-	0x034E, 0x0BB8,
-	0x0340, 0x0C72,
-	0x0342, 0x2700,
-	0x0900, 0x0112,
-	0x0380, 0x0001,
-	0x0382, 0x0001,
-	0x0384, 0x0002,
-	0x0386, 0x0002,
-	0x0400, 0x2010,
-	0x0402, 0x1010,
-	0x0404, 0x1000,
-	0x0350, 0x0000,
-	0x0352, 0x0000,
-	0x0136, 0x1800,
-	0x013E, 0x0000,
-	0x0300, 0x0008,
-	0x0302, 0x0001,
-	0x0304, 0x0006,
-	0x0306, 0x00F0,
-	0x0308, 0x0008,
-	0x030A, 0x0001,
-	0x030C, 0x0000,
-	0x030E, 0x0003,
-	0x0310, 0x004C,
-	0x0312, 0x0000,
-	0x6028, 0x2000,
-	0x602A, 0x0E36,
-	0x6F12, 0x000A,
-	0x602A, 0x1250,
-	0x6F12, 0x0002,
-	0xF44A, 0x0007,
-	0xF454, 0x0011,
-	0x6028, 0x2000,
-	0x602A, 0x10C0,
-	0x6F12, 0xBFC0,
-	0x6F12, 0xBFC1,
-	0x602A, 0x3B24,
-	0x6F12, 0x000A,
-	0x9C02, 0x1FC0,
-	0x9C04, 0x1FC7,
-	0x6028, 0x2000,
-	0x602A, 0x0E6E,
-	0x6F12, 0x0030,
-	0x602A, 0x3632,
-	0x6F12, 0x00B0,
-	0x602A, 0x11B4,
-	0x6F12, 0x0190,
-	0x6028, 0x2000,
-	0x602A, 0x0DD6,
-	0x6F12, 0x0008,
-	0x602A, 0x0DDC,
-	0x6F12, 0x0000,
-	0x602A, 0x1EAC,
-	0x6F12, 0x0096,
-	0x6028, 0x2000,
-	0x602A, 0x33B0,
-	0x6F12, 0x0004,
-	0x602A, 0x33B6,
-	0x6F12, 0x0001,
-	0x602A, 0x33FC,
-	0x6F12, 0x0604,
-	0x602A, 0x33FE,
-	0x6F12, 0x0704,
-	0x602A, 0x3462,
-	0x6F12, 0x0501,
-	0x602A, 0x347C,
-	0x6F12, 0x0000,
-	0x602A, 0x34A6,
-	0x6F12, 0x5555,
-	0x602A, 0x34E4,
-	0x6F12, 0x0101,
-	0x602A, 0x34F2,
-	0x6F12, 0x0000,
-	0x0D00, 0x0100, //AF_mBPC_Off
-	0x0D02, 0x0001, //Tail_Off
-	0x0114, 0x0300,
-	0x6028, 0x2000,
-	0x602A, 0x2A02,
-	0x6F12, 0x0103,
-	0x6028, 0x2000, //main_setting
-	0x602A, 0x116E,
-	0x6F12, 0x0001,
-	0x602A, 0x1172,
-	0x6F12, 0x0100,
-	0x602A, 0x6C0E,
-	0x6F12, 0x0210,
-	0x602A, 0x2A10,
-	0x6F12, 0x0100,
-	0x602A, 0x2A80,
-	0x6F12, 0x0100,
-	0x602A, 0x6C0A,
-	0x6F12, 0x0067,
-	0x6F12, 0x00A8,
-	0xB134, 0x0000,
-	0x0BC8, 0x0101,
-	0x6028, 0x2000,
-	0x602A, 0x39AA,
-	0x6F12, 0x0003,
-	0x6F12, 0x0001,
-	0x6F12, 0x0001,
-	0x602A, 0x39BA,
-	0x6F12, 0x0000,
-	0x6F12, 0x0000,
-	0x6F12, 0x0001,
-	0x6F12, 0x0001,
-	0x602A, 0x39C4,
-	0x6F12, 0x0001,
-	0x6028, 0x2000,
-	0x602A, 0x0E26,
-	0x6F12, 0x1250,
-	0x6F12, 0x0ECC,
-	0x602A, 0x1E7E,
-	0x6F12, 0x0400,
-	0x602A, 0x2450,
-	0x6F12, 0x0000,
-	0x602A, 0x25F8,
-	0x6F12, 0x0000,
-	0x602A, 0x34D8,
-	0x6F12, 0x07C0,
-	0x6F12, 0x07C0,
-	0x6028, 0x2000,
-	0x602A, 0x6A98,
-	0x6F12, 0x0000,
-	0x602A, 0x364E,
-	0x6F12, 0xF44A,
-	0x6F12, 0x0007,
-	0x602A, 0x3676,
-	0x6F12, 0x9C02,
-	0x6F12, 0x1FC0,
-	0x602A, 0x367A,
-	0x6F12, 0x9C04,
-	0x6F12, 0x1FC7,
-#endif
-	0x0100, 0x0100, //Streaming On
-
-};
-
 static void slim_video_setting(void)
 {
 	LGE_DEBUG("slim_video_setting() E\n");
 
-	table_write_cmos_sensor(addr_data_pair_slim_gm2,
-		sizeof(addr_data_pair_slim_gm2) / sizeof(kal_uint16));
+	table_write_cmos_sensor(addr_data_pair_hs_gm2,
+		sizeof(addr_data_pair_hs_gm2) / sizeof(kal_uint16));
 }
 
 static kal_uint16 addr_data_pair_custom1_gm2[] = {
@@ -3260,43 +2977,6 @@ static void custom2_setting(void)
 }
 
 
-/*TETRACELL CAL bring up*/
-extern kal_uint16 tetracell_cal_i2c_read(tetracell_cal_format_t *p, u16 i2c_addr, enum CAL_FORM cal_form, UINT8* data_c);
-extern tetracell_cal_data_t tetracell_cal_data[2];
-#define EEPROM_I2C_ADDR		0xAC
-#define FOUR_CELL_SIZE      8390 // 0x20c6
-static void tetracell_cal_read(void)
-{
-	int i;
-	UINT8 *data = (UINT8*)&tetracell_cal_data[0];
-	tetracell_cal_format_t tetracell_cal_format_data[TETRACELL_CAL_FORM_MAX] = {
-		/*
-		bool flag;
-		UINT16 start_addr;
-		UINT16 size;
-		UINT16 offset;
-		*/
-		{true,  0x0040, CAL_XTC_SIZE, 2}, // XTC-1 0x0040-0x0919
-		{true,  0x091A, CAL_XTC_SIZE, 2 + CAL_XTC_SIZE}, // XTC-2 0x091A-0x11F3
-		{true,  0x11F4, CAL_SENSORXTC_SIZE,  2 + CAL_XTC_SIZE + CAL_XTC_SIZE}, // SensorXTC 0x11F4-0x1233
-		{true,  0x1234, CAL_PDXTC_SIZE, 2 + CAL_XTC_SIZE + CAL_XTC_SIZE + CAL_SENSORXTC_SIZE}, // PDXTC-1 0x1234-0x199C
-		{true,  0x199D, CAL_PDXTC_SIZE, 2 + CAL_XTC_SIZE + CAL_XTC_SIZE + CAL_SENSORXTC_SIZE + CAL_PDXTC_SIZE} // PDXTC-2 0x199D-0x2105
-	};
-
-	*data = (FOUR_CELL_SIZE & 0xff);/*Low*/
-	*(data + 1) = ((FOUR_CELL_SIZE >> 8) & 0xff);/*High*/
-
-	printk("%s", __func__);
-	for (i = 0; i < TETRACELL_CAL_FORM_MAX; i++)
-		if (tetracell_cal_format_data[i].flag)
-			tetracell_cal_i2c_read(&tetracell_cal_format_data[i], EEPROM_I2C_ADDR, i, data);
-
-printk("tetracell_cal_data xtc_1(%d) xtc_2(%d) sensorxtc(%d) pdxtc_1(%d) pdxtc_2(%d)",
-			tetracell_cal_data[0].xtc_1.data[0], tetracell_cal_data[0].xtc_2.data[0], tetracell_cal_data[0].sensorxtc.data[0],
-			tetracell_cal_data[0].pdxtc_1.data[0], tetracell_cal_data[0].pdxtc_2.data[0]);
-
-}
-
 
 /*************************************************************************
  * FUNCTION
@@ -3330,9 +3010,7 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 		do {
 			*sensor_id = ((read_cmos_sensor_8(0x0000) << 8) | read_cmos_sensor_8(0x0001));
 			if (*sensor_id == imgsensor_info.sensor_id) {
-				LGE_DEBUG("i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id, *sensor_id);
-			strcpy(rear_sensor_name, "s5kgm2_lgit");/*LGE_CHANGE, 2019-11-14, add the camera identifying logic , bk.bae@lge.com*/
-			tetracell_cal_read();
+				pr_info(PFX " i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id, *sensor_id);
 			return ERROR_NONE;
 			}
 			LGE_DEBUG("Read sensor id fail, id: 0x%x\n", imgsensor.i2c_write_id);
@@ -3599,6 +3277,7 @@ static kal_uint32 slim_video(
 	spin_unlock(&imgsensor_drv_lock);
 
 	slim_video_setting();
+	set_dummy();
 
 	set_mirror_flip(imgsensor.mirror);
 
@@ -4520,6 +4199,7 @@ static kal_uint32 feature_control( MSDK_SENSOR_FEATURE_ENUM feature_id,
 
 		case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
 		LOG_INF("MSDK_SCENARIO_ID_CAMERA_PREVIEW = %d\n", (UINT16)*feature_data);
+		fallthrough;
 		default:
 			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.pre.pclk /
 			(imgsensor_info.pre.linelength - 80)) * imgsensor_info.pre.grabwindow_width;
