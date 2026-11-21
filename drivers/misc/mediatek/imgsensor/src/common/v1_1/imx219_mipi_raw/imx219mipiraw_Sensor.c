@@ -1032,10 +1032,22 @@ static kal_uint32 set_test_pattern_mode(kal_bool enable)
 * GLOBALS AFFECTED
 *
 *************************************************************************/
+/*
+ * After reset (XCLR) is released the sensor needs about 6 ms before it answers on i2c
+ * (IMX219_XCLR_MIN_DELAY_US = 6200 in mainline Linux's imx219 driver); the power sequence
+ * releases reset right before the first read.
+ */
+static void imx219_wait_xclr(void)
+{
+	usleep_range(6200, 7000);
+}
+
 static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 {
 	kal_uint8 i = 0;
 	kal_uint8 retry = 2;
+
+	imx219_wait_xclr();
 	//sensor have two i2c address 0x6c 0x6d & 0x21 0x20, we should detect the module used i2c address
 	while (imgsensor_info.i2c_addr_table[i] != 0xff) {
 		spin_lock(&imgsensor_drv_lock);
@@ -1044,7 +1056,7 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 		do {
 			*sensor_id = return_sensor_id();
 			if (*sensor_id == imgsensor_info.sensor_id) {
-				LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);
+				pr_info(PFX " i2c write id: 0x%x, sensor id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);
 				return ERROR_NONE;
 			}
 			LOG_INF("Read sensor id fail, i2c write id: 0x%x id: 0x%x\n", imgsensor.i2c_write_id,*sensor_id);
@@ -1085,6 +1097,7 @@ static kal_uint32 open(void)
 	kal_uint32 sensor_id = 0;
 	LOG_1;
 	LOG_2;
+	imx219_wait_xclr();
 	//sensor have two i2c address 0x6c 0x6d & 0x21 0x20, we should detect the module used i2c address
 	while (imgsensor_info.i2c_addr_table[i] != 0xff) {
 		spin_lock(&imgsensor_drv_lock);
