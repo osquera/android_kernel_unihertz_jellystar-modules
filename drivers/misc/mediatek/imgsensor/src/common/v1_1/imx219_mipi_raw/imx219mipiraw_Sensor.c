@@ -82,8 +82,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x9c8,
-		.startx = 0,
-		.starty = 0,
+		.startx = 4,
+		.starty = 4,
 		.grabwindow_width = 3264,
 		.grabwindow_height = 2448,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -93,8 +93,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x9c8,
-		.startx = 0,
-		.starty = 0,
+		.startx = 4,
+		.starty = 4,
 		.grabwindow_width = 3264,
 		.grabwindow_height = 2448,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -117,8 +117,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x9c8,
-		.startx = 0,
-		.starty = 0,
+		.startx = 4,
+		.starty = 4,
 		.grabwindow_width = 3264,
 		.grabwindow_height = 2448,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -128,8 +128,8 @@ static imgsensor_info_struct imgsensor_info = {
 		.pclk = 172800000,
 		.linelength = 0xD78,
 		.framelength = 0x687,//9F0
-		.startx = 0,
-		.starty = 0,
+		.startx = 4,
+		.starty = 4,
 		.grabwindow_width = 1280,
 		.grabwindow_height = 720,
 		.mipi_data_lp2hs_settle_dc = 85,//unit , ns
@@ -144,7 +144,7 @@ static imgsensor_info_struct imgsensor_info = {
 	.ae_ispGain_delay_frame = 2,//isp gain delay frame for AE cycle
 	.ihdr_support = 0,	  //1, support; 0,not support
 	.ihdr_le_firstline = 0,  //1,le first ; 0, se first
-	.sensor_mode_num = 5,	  //support sensor mode num
+	.sensor_mode_num = 3,	/* as stock */	  //support sensor mode num
 
 	.cap_delay_frame = 2,		//enter capture delay frame num
 	.pre_delay_frame = 2, 		//enter preview delay frame num
@@ -181,12 +181,12 @@ static imgsensor_struct imgsensor = {
 
 /* Sensor output window information */
 static struct SENSOR_WINSIZE_INFO_STRUCT imgsensor_winsize_info[5] =
-/* Jelly Star: the sensor outputs exactly the grab window (MT6789's cam mux checks the size) */
-{{ 3280, 2464,	8,	8, 3264, 2448, 1632, 1224, 0, 0, 1632, 1224,	0,	0, 1632, 1224}, // Preview
- { 3280, 2464,	8,	8, 3264, 2448, 3264, 2448, 0, 0, 3264, 2448,	0,	0, 3264, 2448}, // capture
- { 3280, 2464,	8,	8, 3264, 2448, 1632, 1224, 0, 0, 1632, 1224,	0,	0, 1632, 1224}, // video (preview setting)
- { 3280, 2464,	8,	8, 3264, 2448, 3264, 2448, 0, 0, 3264, 2448,	0,	0, 3264, 2448}, // high speed video (capture setting)
- { 3280, 2464, 360, 512, 2560, 1440, 1280,  720, 0, 0, 1280,  720,	0,	0, 1280,  720}};// slim video
+/* Jelly Star: as the stock driver's table */
+{{ 3280, 2464,	0,	0, 3280, 2464, 1640, 1232, 0, 0, 1640, 1232,	2,	2, 1632, 1224}, // Preview
+ { 3280, 2464,	0,	0, 3280, 2464, 3280, 2464, 0, 0, 3280, 2464,	4,	4, 3264, 2448}, // capture
+ { 3280, 2464,	0,	0, 3280, 2464, 1640, 1232, 0, 0, 1640, 1232,	2,	2, 1632, 1224}, // video (preview setting)
+ { 3280, 2464,	0,	0, 3280, 2464, 3280, 2464, 0, 0, 3280, 2464,	4,	4, 3264, 2448}, // high speed video (capture setting)
+ { 3280, 2464,	0,	0, 3280, 2464, 1640,  926, 0, 0, 1640,  926,	0,	0, 1280,  720}};// slim video
 
 
 #define IMX219MIPI_MaxGainIndex (97)
@@ -659,17 +659,17 @@ static void preview_setting(void)
 	write_cmos_sensor(0x0162,  ((imgsensor_info.pre.linelength >> 8) & 0xFF));
 	write_cmos_sensor(0x0163,  (imgsensor_info.pre.linelength & 0xFF));
 	write_cmos_sensor(0x0164,  0x00);
-	write_cmos_sensor(0x0165,  0x08);
+	write_cmos_sensor(0x0165,  0x00);
 	write_cmos_sensor(0x0166,  0x0C);
-	write_cmos_sensor(0x0167,  0xC7);
+	write_cmos_sensor(0x0167,  0xCF);
 	write_cmos_sensor(0x0168,  0x00);
-	write_cmos_sensor(0x0169,  0x08);
+	write_cmos_sensor(0x0169,  0x00);
 	write_cmos_sensor(0x016A,  0x09);
-	write_cmos_sensor(0x016B,  0x97);
+	write_cmos_sensor(0x016B,  0x9F);
 	write_cmos_sensor(0x016C,  0x06);
-	write_cmos_sensor(0x016D,  0x60);
+	write_cmos_sensor(0x016D,  0x68);
 	write_cmos_sensor(0x016E,  0x04);
-	write_cmos_sensor(0x016F,  0xC8);
+	write_cmos_sensor(0x016F,  0xD0);
 	write_cmos_sensor(0x0170,  0x01);
 	write_cmos_sensor(0x0171,  0x01);
 	write_cmos_sensor(0x0172,  0x03); /* H mirror + V flip, as stock */
@@ -724,17 +724,17 @@ static void capture_setting(kal_uint16 currefps)
 		  write_cmos_sensor(0x0162,   ((imgsensor_info.cap1.linelength >> 8) & 0xFF));
 		  write_cmos_sensor(0x0163,   (imgsensor_info.cap1.linelength & 0xFF));
 		  write_cmos_sensor(0x0164,   0x00);
-		  write_cmos_sensor(0x0165,   0x08);
+		  write_cmos_sensor(0x0165,   0x00);
 		  write_cmos_sensor(0x0166,   0x0C);
-		  write_cmos_sensor(0x0167,   0xC7);
+		  write_cmos_sensor(0x0167,   0xCF);
 		  write_cmos_sensor(0x0168,   0x00);
-		  write_cmos_sensor(0x0169,   0x08);
+		  write_cmos_sensor(0x0169,   0x00);
 		  write_cmos_sensor(0x016A,   0x09);
-		  write_cmos_sensor(0x016B,   0x97);
+		  write_cmos_sensor(0x016B,   0x9F);
 		  write_cmos_sensor(0x016C,   0x0C);
-		  write_cmos_sensor(0x016D,   0xC0);
+		  write_cmos_sensor(0x016D,   0xD0);
 		  write_cmos_sensor(0x016E,   0x09);
-		  write_cmos_sensor(0x016F,   0x90);
+		  write_cmos_sensor(0x016F,   0xA0);
 		  write_cmos_sensor(0x0170,   0x01);
 		  write_cmos_sensor(0x0171,   0x01);
 		  write_cmos_sensor(0x0172,   0x03); /* H mirror + V flip, as stock */
@@ -784,17 +784,17 @@ static void capture_setting(kal_uint16 currefps)
 		  write_cmos_sensor(0x0162,   ((imgsensor_info.cap.linelength >> 8) & 0xFF));
 		  write_cmos_sensor(0x0163,   (imgsensor_info.cap.linelength & 0xFF));
 		  write_cmos_sensor(0x0164,   0x00);
-		  write_cmos_sensor(0x0165,   0x08);
+		  write_cmos_sensor(0x0165,   0x00);
 		  write_cmos_sensor(0x0166,   0x0C);
-		  write_cmos_sensor(0x0167,   0xC7);
+		  write_cmos_sensor(0x0167,   0xCF);
 		  write_cmos_sensor(0x0168,   0x00);
-		  write_cmos_sensor(0x0169,   0x08);
+		  write_cmos_sensor(0x0169,   0x00);
 		  write_cmos_sensor(0x016A,   0x09);
-		  write_cmos_sensor(0x016B,   0x97);
+		  write_cmos_sensor(0x016B,   0x9F);
 		  write_cmos_sensor(0x016C,   0x0C);
-		  write_cmos_sensor(0x016D,   0xC0);
+		  write_cmos_sensor(0x016D,   0xD0);
 		  write_cmos_sensor(0x016E,   0x09);
-		  write_cmos_sensor(0x016F,   0x90);
+		  write_cmos_sensor(0x016F,   0xA0);
 		  write_cmos_sensor(0x0170,   0x01);
 		  write_cmos_sensor(0x0171,   0x01);
 		  write_cmos_sensor(0x0174,   0x00);
@@ -867,18 +867,18 @@ static void slim_video_setting(void)
 	write_cmos_sensor(0x0161,     (imgsensor_info.slim_video.framelength & 0xFF));
 	write_cmos_sensor(0x0162,     ((imgsensor_info.slim_video.linelength >> 8) & 0xFF));
 	write_cmos_sensor(0x0163,     (imgsensor_info.slim_video.linelength & 0xFF));
-	write_cmos_sensor(0x0164,   0x01);
-	write_cmos_sensor(0x0165,   0x68);
-	write_cmos_sensor(0x0166,   0x0B);
-	write_cmos_sensor(0x0167,   0x67);
-	write_cmos_sensor(0x0168,   0x02);
-	write_cmos_sensor(0x0169,   0x00);
-	write_cmos_sensor(0x016A,   0x07);
-	write_cmos_sensor(0x016B,   0x9F);
-	write_cmos_sensor(0x016C,   0x05);
-	write_cmos_sensor(0x016D,   0x00);
-	write_cmos_sensor(0x016E,   0x02);
-	write_cmos_sensor(0x016F,   0xD0);
+	write_cmos_sensor(0x0164,   0x00);
+	write_cmos_sensor(0x0165,   0x00);
+	write_cmos_sensor(0x0166,   0x0C);
+	write_cmos_sensor(0x0167,   0xCF);
+	write_cmos_sensor(0x0168,   0x01);
+	write_cmos_sensor(0x0169,   0x32);
+	write_cmos_sensor(0x016A,   0x08);
+	write_cmos_sensor(0x016B,   0x6D);
+	write_cmos_sensor(0x016C,   0x06);
+	write_cmos_sensor(0x016D,   0x68);
+	write_cmos_sensor(0x016E,   0x03);
+	write_cmos_sensor(0x016F,   0x9E);
 	write_cmos_sensor(0x0170,   0x01);
 	write_cmos_sensor(0x0171,   0x01);
 	write_cmos_sensor(0x0174,   0x01);
@@ -922,12 +922,28 @@ kal_uint8  test_pattern_flag=0;
  * capture scenario, turned the colour bars on in its "disable" path too.
  * TEST_PATTERN_MODE (0x0600/0x0601): 0 = off, 2 = colour bars.
  */
+/*
+ * TEST_PATTERN_MODE (0x0600/0x0601): 0 = off, 2 = colour bars. The stock driver also writes
+ * the test pattern window (0x0624-0x0627) and these vendor registers (observed on the bus).
+ */
 static kal_uint32 set_test_pattern_mode(kal_bool enable)
 {
 	LOG_INF("enable: %d\n", enable);
 	test_pattern_flag = enable ? KAL_TRUE : KAL_FALSE;
 	write_cmos_sensor(0x0600, 0x00);
 	write_cmos_sensor(0x0601, enable ? 0x02 : 0x00);
+	write_cmos_sensor(0x0624, 0x06);
+	write_cmos_sensor(0x0625, 0x68);
+	write_cmos_sensor(0x0626, 0x04);
+	write_cmos_sensor(0x0627, 0xD0);
+	write_cmos_sensor(0x6128, 0x00);
+	write_cmos_sensor(0x6129, 0x02);
+	write_cmos_sensor(0x613C, 0x06);
+	write_cmos_sensor(0x613D, 0x68);
+	write_cmos_sensor(0x613E, 0x04);
+	write_cmos_sensor(0x613F, 0xD0);
+	write_cmos_sensor(0x6506, 0x00);
+	write_cmos_sensor(0x6507, 0x00);
 	return ERROR_NONE;
 }
 
@@ -1520,7 +1536,7 @@ static kal_uint32 get_default_framerate_by_scenario(enum MSDK_SCENARIO_ID_ENUM s
 
 
 
-#define IMX219_MIPI_PIXEL_RATE 172800000
+#define IMX219_MIPI_PIXEL_RATE 345600000	/* the value stock reports */
 
 /*
  * The Jelly Star camera HAL applies white balance on this sensor: it sends its AWB gains
@@ -1728,7 +1744,6 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 			}
 			break;
 		case SENSOR_FEATURE_GET_MIPI_PIXEL_RATE:
-			/* 2 lanes x 864 Mb/s (OP PLL: 24 MHz / 3 x 108) / 10 bits, the same in every mode */
 			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = IMX219_MIPI_PIXEL_RATE;
 			break;
 		case SENSOR_FEATURE_GET_PIXEL_RATE:
