@@ -1522,6 +1522,28 @@ static kal_uint32 get_default_framerate_by_scenario(enum MSDK_SCENARIO_ID_ENUM s
 
 #define IMX219_MIPI_PIXEL_RATE 172800000
 
+/*
+ * The Jelly Star camera HAL applies white balance on this sensor: it sends its AWB gains
+ * (1.0 = 512) and the sensor's colour gain registers (Gr, R, B, Gb at 0x0B8E-0x0B95,
+ * 1.0 = 0x100) apply them, as the stock driver does.
+ */
+static void imx219_set_awb_gain(struct SET_SENSOR_AWB_GAIN *awb)
+{
+	kal_uint32 gr = (awb->ABS_GAIN_GR + 1) >> 1;
+	kal_uint32 r = (awb->ABS_GAIN_R + 1) >> 1;
+	kal_uint32 b = (awb->ABS_GAIN_B + 1) >> 1;
+	kal_uint32 gb = (awb->ABS_GAIN_GB + 1) >> 1;
+
+	write_cmos_sensor(0x0B8E, (gr >> 8) & 0xFF);
+	write_cmos_sensor(0x0B8F, gr & 0xFF);
+	write_cmos_sensor(0x0B90, (r >> 8) & 0xFF);
+	write_cmos_sensor(0x0B91, r & 0xFF);
+	write_cmos_sensor(0x0B92, (b >> 8) & 0xFF);
+	write_cmos_sensor(0x0B93, b & 0xFF);
+	write_cmos_sensor(0x0B94, (gb >> 8) & 0xFF);
+	write_cmos_sensor(0x0B95, gb & 0xFF);
+}
+
 /* The mode tables already start streaming (0x0100 = 1); the HAL also stops and restarts it. */
 static void streaming_control(kal_bool enable)
 {
@@ -1640,6 +1662,9 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		case SENSOR_FEATURE_SET_IHDR_SHUTTER_GAIN:
             LOG_INF("SENSOR_SET_SENSOR_IHDR LE=%d, SE=%d, Gain=%d\n",(UINT16)*feature_data,(UINT16)*(feature_data+1),(UINT16)*(feature_data+2));
             ihdr_write_shutter_gain((UINT16)*feature_data,(UINT16)*(feature_data+1),(UINT16)*(feature_data+2));
+			break;
+		case SENSOR_FEATURE_SET_AWB_GAIN:
+			imx219_set_awb_gain((struct SET_SENSOR_AWB_GAIN *)feature_para);
 			break;
 		/* Jelly Star: per-scenario timing queries of the current MediaTek HAL */
 		case SENSOR_FEATURE_GET_PERIOD_BY_SCENARIO:
