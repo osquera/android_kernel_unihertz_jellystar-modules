@@ -4923,6 +4923,7 @@ def get_overlay_modules_list():
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore".format(kernel_version),
         "//kernel_device_modules-{}/drivers/tee/tkcore:tkcore_drv".format(kernel_version),
         "//kernel_device_modules-{}/drivers/leds:leds-aw2033".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/leds:lampbelt-leds".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/nfc/tms_thn31:tms_thn31".format(kernel_version),
         "//kernel_device_modules-{}/sound/soc/codecs/frsm_i2cd:snd-soc-fs19xx".format(kernel_version),
         "//kernel_device_modules-{}/sound/soc/codecs/fsm:snd-soc-fsm".format(kernel_version),
