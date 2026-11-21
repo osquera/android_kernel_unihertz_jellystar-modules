@@ -4235,6 +4235,47 @@ static kal_uint32 feature_control( MSDK_SENSOR_FEATURE_ENUM feature_id,
 			break;
 		}
 		break;
+	/* Jelly Star: per-scenario timing queries of the current MediaTek HAL */
+	case SENSOR_FEATURE_GET_PERIOD_BY_SCENARIO:
+		switch (*feature_data) {
+		case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.cap.framelength << 16) + imgsensor_info.cap.linelength;
+			break;
+		case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.normal_video.framelength << 16) + imgsensor_info.normal_video.linelength;
+			break;
+		case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.hs_video.framelength << 16) + imgsensor_info.hs_video.linelength;
+			break;
+		case MSDK_SCENARIO_ID_SLIM_VIDEO:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.slim_video.framelength << 16) + imgsensor_info.slim_video.linelength;
+			break;
+		case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
+		default:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.pre.framelength << 16) + imgsensor_info.pre.linelength;
+			break;
+		}
+		break;
+	case SENSOR_FEATURE_GET_PIXEL_CLOCK_FREQ_BY_SCENARIO:
+		switch (*feature_data) {
+		case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.cap.pclk;
+			break;
+		case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.normal_video.pclk;
+			break;
+		case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.hs_video.pclk;
+			break;
+		case MSDK_SCENARIO_ID_SLIM_VIDEO:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.slim_video.pclk;
+			break;
+		case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
+		default:
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.pre.pclk;
+			break;
+		}
+		break;
 	default:
 		break;
 	}

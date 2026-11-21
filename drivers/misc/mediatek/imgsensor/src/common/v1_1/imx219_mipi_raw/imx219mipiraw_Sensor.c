@@ -185,7 +185,7 @@ static struct SENSOR_WINSIZE_INFO_STRUCT imgsensor_winsize_info[5] =
  { 3280, 2464,	0,	0, 3280, 2464, 3280, 2464, 0, 0, 3280, 2464,	4,	4, 3264, 2448}, // capture 
  { 3280, 2464,	0, 	0, 3280, 2464, 1640, 1232, 0, 0, 1640, 1232,		2,	2, 1632,  1224}, // video (preview setting)
  { 3280, 2464,	0,	0, 3280, 2464, 3280, 2464, 0, 0, 3280, 2464,	4,	4, 3264, 2448}, // high speed video (capture setting)
- { 3280, 2464,	0,  0, 3280, 2464, 1640,  926, 0, 0, 1640,  926,	4,	4, 1280,  720}};// slim video 
+ { 3280, 2464,	0,  306, 3280, 1852, 1640,  926, 0, 0, 1640,  926,	4,	4, 1280,  720}};// slim video: rows 306-2157 (0x0168-0x016B), binned 2x2
 
 
 #define IMX219MIPI_MaxGainIndex (97)
@@ -1605,6 +1605,16 @@ static kal_uint32 get_default_framerate_by_scenario(enum MSDK_SCENARIO_ID_ENUM s
 
 
 
+#define IMX219_MIPI_PIXEL_RATE 172800000
+
+/* The mode tables already start streaming (0x0100 = 1); the HAL also stops and restarts it. */
+static void streaming_control(kal_bool enable)
+{
+	write_cmos_sensor(0x0100, enable ? 0x01 : 0x00);
+	if (!enable)
+		mdelay(1000 / (imgsensor.current_fps ? imgsensor.current_fps / 10 : 30) + 1);
+}
+
 static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 							 UINT8 *feature_para,UINT32 *feature_para_len)
 {
@@ -1715,6 +1725,79 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		case SENSOR_FEATURE_SET_IHDR_SHUTTER_GAIN:
             LOG_INF("SENSOR_SET_SENSOR_IHDR LE=%d, SE=%d, Gain=%d\n",(UINT16)*feature_data,(UINT16)*(feature_data+1),(UINT16)*(feature_data+2));
             ihdr_write_shutter_gain((UINT16)*feature_data,(UINT16)*(feature_data+1),(UINT16)*(feature_data+2));
+			break;
+		/* Jelly Star: per-scenario timing queries of the current MediaTek HAL */
+		case SENSOR_FEATURE_GET_PERIOD_BY_SCENARIO:
+			switch (*feature_data) {
+			case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.cap.framelength << 16) + imgsensor_info.cap.linelength;
+				break;
+			case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.normal_video.framelength << 16) + imgsensor_info.normal_video.linelength;
+				break;
+			case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.hs_video.framelength << 16) + imgsensor_info.hs_video.linelength;
+				break;
+			case MSDK_SCENARIO_ID_SLIM_VIDEO:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.slim_video.framelength << 16) + imgsensor_info.slim_video.linelength;
+				break;
+			case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
+			default:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.pre.framelength << 16) + imgsensor_info.pre.linelength;
+				break;
+			}
+			break;
+		case SENSOR_FEATURE_GET_PIXEL_CLOCK_FREQ_BY_SCENARIO:
+			switch (*feature_data) {
+			case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.cap.pclk;
+				break;
+			case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.normal_video.pclk;
+				break;
+			case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.hs_video.pclk;
+				break;
+			case MSDK_SCENARIO_ID_SLIM_VIDEO:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.slim_video.pclk;
+				break;
+			case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
+			default:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = imgsensor_info.pre.pclk;
+				break;
+			}
+			break;
+		case SENSOR_FEATURE_GET_MIPI_PIXEL_RATE:
+			/* 2 lanes x 864 Mb/s (OP PLL: 24 MHz / 3 x 108) / 10 bits, the same in every mode */
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = IMX219_MIPI_PIXEL_RATE;
+			break;
+		case SENSOR_FEATURE_GET_PIXEL_RATE:
+			switch (*feature_data) {
+			case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.cap.pclk / (imgsensor_info.cap.linelength - 80)) * imgsensor_info.cap.grabwindow_width;
+				break;
+			case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.normal_video.pclk / (imgsensor_info.normal_video.linelength - 80)) * imgsensor_info.normal_video.grabwindow_width;
+				break;
+			case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.hs_video.pclk / (imgsensor_info.hs_video.linelength - 80)) * imgsensor_info.hs_video.grabwindow_width;
+				break;
+			case MSDK_SCENARIO_ID_SLIM_VIDEO:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.slim_video.pclk / (imgsensor_info.slim_video.linelength - 80)) * imgsensor_info.slim_video.grabwindow_width;
+				break;
+			case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
+			default:
+				*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = (imgsensor_info.pre.pclk / (imgsensor_info.pre.linelength - 80)) * imgsensor_info.pre.grabwindow_width;
+				break;
+			}
+			break;
+		case SENSOR_FEATURE_SET_STREAMING_SUSPEND:
+			streaming_control(KAL_FALSE);
+			break;
+		case SENSOR_FEATURE_SET_STREAMING_RESUME:
+			if (*feature_data != 0)
+				set_shutter(*feature_data);
+			streaming_control(KAL_TRUE);
 			break;
 		default:
 			break;
