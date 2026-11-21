@@ -917,103 +917,17 @@ static void slim_video_setting(void)
 //
 kal_uint8  test_pattern_flag=0;
 
+/*
+ * Jelly Star: the Volla version wrote vendor registers around this and, in the
+ * capture scenario, turned the colour bars on in its "disable" path too.
+ * TEST_PATTERN_MODE (0x0600/0x0601): 0 = off, 2 = colour bars.
+ */
 static kal_uint32 set_test_pattern_mode(kal_bool enable)
 {
 	LOG_INF("enable: %d\n", enable);
-	if(imgsensor.current_scenario_id != MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG)
-	   {
-		   if(enable)
-		   {
-			   //1640 x 1232
-			   // enable color bar
-			   test_pattern_flag=TRUE;
-			   write_cmos_sensor(0x0600, 0x00);
-			   write_cmos_sensor(0x0601, 0x02);
-			   write_cmos_sensor(0x0624, 0x06); //W:3280---h
-			   write_cmos_sensor(0x0625, 0x68); //		  l
-			   write_cmos_sensor(0x0626, 0x04); //H:2464   h
-			   write_cmos_sensor(0x0627, 0xd0); //		  l
-			   write_cmos_sensor(0x6128, 0x00);
-			   write_cmos_sensor(0x6129, 0x02);
-			   write_cmos_sensor(0x613C, 0x06); //W 		h
-			   write_cmos_sensor(0x613D, 0x68); //		   l
-			   write_cmos_sensor(0x613E, 0x04); //H 		h
-			   write_cmos_sensor(0x613F, 0xd0); //			   l
-			   write_cmos_sensor(0x6506, 0x00);
-			   write_cmos_sensor(0x6507, 0x00);
-
-		   }
-		   else
-		   {
-			   //1640 x 1232
-			   test_pattern_flag=KAL_FALSE;
-			   write_cmos_sensor(0x0600, 0x00);
-			   write_cmos_sensor(0x0601, 0x00);
-			   write_cmos_sensor(0x0624, 0x06); //W:3280---h
-			   write_cmos_sensor(0x0625, 0x68); //		  l
-			   write_cmos_sensor(0x0626, 0x04); //H:2464   h
-			   write_cmos_sensor(0x0627, 0xd0); //		  l
-			   write_cmos_sensor(0x6128, 0x00);
-			   write_cmos_sensor(0x6129, 0x02);
-			   write_cmos_sensor(0x613C, 0x06); //W 		h
-			   write_cmos_sensor(0x613D, 0x68); //		   l
-			   write_cmos_sensor(0x613E, 0x04); //H 		h
-			   write_cmos_sensor(0x613F, 0xd0); //			   l
-			   write_cmos_sensor(0x6506, 0x00);
-			   write_cmos_sensor(0x6507, 0x00);
-
-		   }
-	   }
-	   else
-	   {
-		   if(enable)
-		   {
-			   //3280 x 2464
-			   // enable color bar
-			   test_pattern_flag=TRUE;
-			   write_cmos_sensor(0x0600, 0x00);
-			   write_cmos_sensor(0x0601, 0x02);
-			   write_cmos_sensor(0x0624, 0x0C); //W:3280---h
-			   write_cmos_sensor(0x0625, 0xD0); //		  l
-			   write_cmos_sensor(0x0626, 0x09); //H:2464   h
-			   write_cmos_sensor(0x0627, 0xA0); //		  l
-			   write_cmos_sensor(0x6128, 0x00);
-			   write_cmos_sensor(0x6129, 0x02);
-			   write_cmos_sensor(0x613C, 0x0C); //W 		h
-			   write_cmos_sensor(0x613D, 0xD0); //		   l
-			   write_cmos_sensor(0x613E, 0x09); //H 		h
-			   write_cmos_sensor(0x613F, 0xA0); //			   l
-			   write_cmos_sensor(0x6506, 0x00);
-			   write_cmos_sensor(0x6507, 0x00);
-
-		   }
-		   else
-		   {
-			   test_pattern_flag=KAL_FALSE;
-			   write_cmos_sensor(0x0600, 0x00);
-			   write_cmos_sensor(0x0601, 0x02);
-			   write_cmos_sensor(0x0624, 0x0C); //W:3280---h
-			   write_cmos_sensor(0x0625, 0xD0); //		  l
-			   write_cmos_sensor(0x0626, 0x09); //H:2464   h
-			   write_cmos_sensor(0x0627, 0xA0); //		  l
-			   write_cmos_sensor(0x6128, 0x00);
-			   write_cmos_sensor(0x6129, 0x02);
-			   write_cmos_sensor(0x613C, 0x0C); //W 		h
-			   write_cmos_sensor(0x613D, 0xD0); //		   l
-			   write_cmos_sensor(0x613E, 0x09); //H 		h
-			   write_cmos_sensor(0x613F, 0xA0); //			   l
-			   write_cmos_sensor(0x6506, 0x00);
-			   write_cmos_sensor(0x6507, 0x00);
-
-
-		   }
-	   }
-
-	   return ERROR_NONE;
-
-	spin_lock(&imgsensor_drv_lock);
-	imgsensor.test_pattern = enable;
-	spin_unlock(&imgsensor_drv_lock);
+	test_pattern_flag = enable ? KAL_TRUE : KAL_FALSE;
+	write_cmos_sensor(0x0600, 0x00);
+	write_cmos_sensor(0x0601, enable ? 0x02 : 0x00);
 	return ERROR_NONE;
 }
 
@@ -1682,7 +1596,7 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
             get_default_framerate_by_scenario((enum MSDK_SCENARIO_ID_ENUM)*(feature_data), (MUINT32 *)(uintptr_t)(*(feature_data+1)));
 			break;
 		case SENSOR_FEATURE_SET_TEST_PATTERN:
-            set_test_pattern_mode((BOOL)*feature_data);
+            set_test_pattern_mode(*feature_data != 0);
 			break;
 		case SENSOR_FEATURE_GET_TEST_PATTERN_CHECKSUM_VALUE: //for factory mode auto testing
 			*feature_return_para_32 = imgsensor_info.checksum_value;
