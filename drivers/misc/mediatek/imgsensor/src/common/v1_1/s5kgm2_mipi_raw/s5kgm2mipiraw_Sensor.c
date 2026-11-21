@@ -201,7 +201,8 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.pre_delay_frame = 1,
 	.video_delay_frame = 2,
 #else
-	.cap_delay_frame = 3,
+	/* Jelly Star: 2 as stock (with 3 the flash photo was taken a frame after the peak) */
+	.cap_delay_frame = 2,
 	.pre_delay_frame = 3,
 	.video_delay_frame = 3,
 #endif
