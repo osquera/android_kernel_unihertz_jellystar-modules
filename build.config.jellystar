@@ -1,0 +1,6 @@
+. ${ROOT_DIR}/${DEVICE_MODULES_DIR}/build.config.mtk_kernel_device_modules
+
+PROJECT=mgk_64_k612
+MODE=user
+SUPPORT_PLATFORM=mt6789
+DEFCONFIG_OVERLAYS="entry_level.config jellystar.config"
