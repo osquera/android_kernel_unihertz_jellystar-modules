@@ -1681,11 +1681,14 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 			break;
 		/*
 		 * Without a gain range the HAL never sends SET_GAIN and makes up the brightness
-		 * with ISP gain. Analog gain: 1x up to the top of the gain table (683 = 10.67x).
+		 * with ISP gain. Same range as the stock driver reports (73 to 4096, i.e. up to
+		 * 64x); gain2reg() clamps to the sensor's analog maximum. With only the analog
+		 * range (up to 10.67x) the HAL stretched the exposure in dim light and the
+		 * video tuning turned the picture grey.
 		 */
 		case SENSOR_FEATURE_GET_GAIN_RANGE_BY_SCENARIO:
-			*(feature_data + 1) = BASEGAIN;
-			*(feature_data + 2) = IMX219MIPI_sensorGainMapping[IMX219MIPI_MaxGainIndex - 1][0];
+			*(feature_data + 1) = 73;
+			*(feature_data + 2) = 64 * BASEGAIN;
 			break;
 		case SENSOR_FEATURE_GET_BASE_GAIN_ISO_AND_STEP:
 			*(feature_data + 0) = 100;
