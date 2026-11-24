@@ -1111,6 +1111,29 @@ static int bs_psy_get_property(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:
 		val->intval = bs_data->bat_status;
+		/*
+		 * Jelly Star: bat_status is only refreshed on external_power_changed(),
+		 * and can be left as Charging or Not charging when that ran while the
+		 * charger was still online during unplugging. Android then shows
+		 * "Charging wirelessly" or "Connected, not charging" with nothing
+		 * connected. Keep it consistent with the charger's current state.
+		 */
+		if (!IS_ERR_OR_NULL(bs_data->chg_psy)) {
+			union power_supply_propval online = {0}, chg_status = {0};
+
+			if (!power_supply_get_property(bs_data->chg_psy,
+						       POWER_SUPPLY_PROP_ONLINE, &online)) {
+				if (!online.intval)
+					val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+				else if (val->intval == POWER_SUPPLY_STATUS_DISCHARGING &&
+					 !power_supply_get_property(bs_data->chg_psy,
+						POWER_SUPPLY_PROP_STATUS, &chg_status))
+					val->intval = chg_status.intval ==
+						POWER_SUPPLY_STATUS_NOT_CHARGING ?
+						POWER_SUPPLY_STATUS_NOT_CHARGING :
+						POWER_SUPPLY_STATUS_CHARGING;
+			}
+		}
 		break;
 	case POWER_SUPPLY_PROP_HEALTH:
 		val->intval = bs_data->bat_health;
