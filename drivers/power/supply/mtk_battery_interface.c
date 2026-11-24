@@ -737,7 +737,7 @@ static void bm_ext_gauge_update(struct mtk_battery_manager *bm, struct battery_d
 	static int last_ext = -1, last_mtk = -1;
 	int soc, uv, deci_c;
 
-	if (bm_ext_gauge_get(POWER_SUPPLY_PROP_CAPACITY, &soc))
+	if (bm_ext_gauge_get(POWER_SUPPLY_PROP_CAPACITY, &soc) || soc < 0 || soc > 100)
 		return;
 	if (soc != last_ext || bm->uisoc != last_mtk) {
 		pr_info("jellystar: soc oz8806=%d mtk=%d\n", soc, bm->uisoc);

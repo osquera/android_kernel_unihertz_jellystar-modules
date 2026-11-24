@@ -1148,8 +1148,25 @@ static int bs_psy_get_property(struct power_supply *psy,
 
 		if (bm->gm1->fixed_uisoc != 0xffff)
 			val->intval = bm->gm1->fixed_uisoc;
-		else
+		else if (bs_data->bat_capacity >= 0)
 			val->intval = bs_data->bat_capacity;
+		else {
+			/*
+			 * Jelly Star: bat_capacity is -1 until the first battery_update(), and
+			 * Android 17's SystemUI crashes drawing a negative level. Report the
+			 * gauges' level instead; failing the read is no option, as the health
+			 * HAL then reports 0 % and Android shuts down unplugged phones.
+			 */
+			int soc;
+
+			if (!bm_ext_gauge_get(POWER_SUPPLY_PROP_CAPACITY, &soc) &&
+			    soc >= 0 && soc <= 100)
+				val->intval = soc;
+			else if (bm->gm1->ui_soc >= 0 && bm->gm1->ui_soc <= 100)
+				val->intval = bm->gm1->ui_soc;
+			else
+				val->intval = 50;
+		}
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		if (!bm_ext_gauge_get(psp, &val->intval))
