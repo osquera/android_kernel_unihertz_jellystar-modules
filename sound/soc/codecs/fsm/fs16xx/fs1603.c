@@ -8,8 +8,9 @@
 #if defined(CONFIG_FSM_FS1603)
 #include "fs1603_reg_bf.h"
 
-#define FS1603_FW_NAME        "fs1603.fsm"
-#define FS1603S_FW_NAME       "fs1603s.fsm"
+/* Jelly Star: the stock vendor ships one firmware file for its single amp, as stock's driver loads. */
+#define FS1603_FW_NAME        "fs16xx_mono.fsm"
+#define FS1603S_FW_NAME       "fs16xx_mono.fsm"
 #define FS1603_PRESET_EQ_LEN  (0x0090)
 #define FS1603_EXCER_RAM_LEN  (0x0070)
 #define FS1603_RS2RL_RATIO    (2700)
