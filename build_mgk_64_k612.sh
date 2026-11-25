@@ -47,8 +47,18 @@ find "${SRC}" -maxdepth 3 -name 'kernel-uapi-headers.tar.gz' -exec cp -t "${FINA
 # Modules the GKI build adds for this target (cfg80211, mac80211, reboot-mode, ...)
 find "${SRC}/${TARGET_DEVICE}.user/" -name '*.ko' -exec cp -n -t "${FINAL_DIST}/" {} +
 
-# Device tree: the MT6789 base DTB and the board overlay image
-find "${SRC}/${TARGET_DEVICE}.user/" -maxdepth 1 -name '*.dtb' -exec cp -t "${FINAL_DIST}/" {} +
+# Device tree: the MT6789 base DTB in a one-entry DT table, as stock's vendor_boot has it. LK
+# rejects the DTB unless the file size is exactly the table's total_size (header bytes 4-7), so
+# drop mkdtboimg's page padding.
+dtb="$(find "${SRC}/${TARGET_DEVICE}.user/" -maxdepth 1 -name 'mt6789.dtb' | head -n1)"
+python3 "${ROOT_DIR}/external/libufdt/utils/src/mkdtboimg.py" create \
+    "${FINAL_DIST}/mt6789.dtb" --page_size=2048 "${dtb}"
+python3 - "${FINAL_DIST}/mt6789.dtb" <<'EOF'
+import sys
+path = sys.argv[1]
+data = open(path, "rb").read()
+open(path, "wb").write(data[:int.from_bytes(data[4:8], "big")])
+EOF
 dtbo_img="${SRC}/${TARGET_DEVICE}_kernel_images.user_dtbo/dtbo.img"
 if [ -f "${dtbo_img}" ]; then
     cp -a "${dtbo_img}" "${FINAL_DIST}/"
