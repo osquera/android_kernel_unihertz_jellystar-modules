@@ -725,8 +725,11 @@ static int frsm_detect_device(struct frsm_dev *frsm_dev)
 	case FRSM_DEVID_FS18DH:
 		frsm_dev->dev_id = devid;
 		ret = fs19v2_dev_ops(frsm_dev);
-		if (ret)
-			break;
+		if (ret) {
+			/* Not an FS18DH: FS1603 (snd-soc-fsm) has the same DEVID[15..8] */
+			dev_info(frsm_dev->dev, "DEVID 0x%04X is not an FS18DH\n", devid);
+			return -ENODEV;
+		}
 		frsm_dev->dev_id = FRSM_DEVID_FS19MS << 8; // DEVID[15..8]
 		dev_info(frsm_dev->dev, "Detect FS199x!\n");
 		return ret;
